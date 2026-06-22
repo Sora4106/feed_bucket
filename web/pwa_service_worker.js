@@ -2,15 +2,15 @@
 
 const CACHE_NAME = 'feed-bucket-pwa-v3';
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon-hao.png',
-  '/icons/apple-touch-icon-hao.png',
-  '/icons/hao-icon-192.png',
-  '/icons/hao-icon-512.png',
-  '/icons/hao-icon-maskable-192.png',
-  '/icons/hao-icon-maskable-512.png',
+  './',
+  'index.html',
+  'manifest.json',
+  'favicon-hao.png',
+  'icons/apple-touch-icon-hao.png',
+  'icons/hao-icon-192.png',
+  'icons/hao-icon-512.png',
+  'icons/hao-icon-maskable-192.png',
+  'icons/hao-icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/index.html')),
+      fetch(event.request).catch(() => caches.match('index.html')),
     );
     return;
   }

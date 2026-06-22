@@ -1,9 +1,9 @@
 {
     "name": "Feed Bucket Monitor",
     "short_name": "FeedBucket",
-    "id": "/",
-    "start_url": "/",
-    "scope": "/",
+    "id": "./",
+    "start_url": "./",
+    "scope": "./",
     "display": "standalone",
     "background_color": "#F5FAFC",
     "theme_color": "#0B5CAD",
