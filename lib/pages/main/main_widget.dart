@@ -335,7 +335,7 @@ class _MainWidgetState extends State<MainWidget> {
           zh: '設定飼料桶參數',
           en: 'Bucket parameters',
         ),
-        icon: Icons.tune_rounded,
+        icon: Icons.settings_rounded,
         accentColor: const Color(0xFF2E8B57),
         onTap: _openSettings,
       ),
@@ -350,7 +350,7 @@ class _MainWidgetState extends State<MainWidget> {
           zh: '查看場域地圖',
           en: 'Map view',
         ),
-        icon: Icons.map_rounded,
+        icon: Icons.map_outlined,
         accentColor: const Color(0xFFF3A530),
         onTap: _openMap,
       ),
@@ -380,7 +380,7 @@ class _MainWidgetState extends State<MainWidget> {
           zh: '圖表與警示',
           en: 'Charts and alerts',
         ),
-        icon: Icons.query_stats_rounded,
+        icon: Icons.manage_search_rounded,
         accentColor: const Color(0xFFD64545),
         onTap: _openHistory,
       ),
@@ -397,7 +397,7 @@ class _MainWidgetState extends State<MainWidget> {
         final cardWidth = isWide
             ? (constraints.maxWidth - (spacing * 3)) / 4
             : (constraints.maxWidth - spacing) / 2;
-        final cardHeight = isWide ? 190.0 : 220.0;
+        final cardHeight = isWide ? 182.0 : 198.0;
 
         return Wrap(
           spacing: spacing,
@@ -556,15 +556,24 @@ class _ActionDashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 720.0;
+    final cardRadius = isCompact ? 20.0 : 22.0;
+    final cardPadding = isCompact ? 18.0 : 20.0;
+    final iconBadgeSize = isCompact ? 68.0 : 72.0;
+    final iconBadgeRadius = isCompact ? 20.0 : 22.0;
+    final iconSize = isCompact ? 38.0 : 40.0;
+    final dotSize = isCompact ? 12.0 : 13.0;
+    final dotInset = isCompact ? 11.0 : 12.0;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(22.0),
+        borderRadius: BorderRadius.circular(cardRadius),
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22.0),
+            borderRadius: BorderRadius.circular(cardRadius),
             gradient: LinearGradient(
               colors: [
                 Colors.white,
@@ -585,26 +594,26 @@ class _ActionDashboardCard extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 52.0,
-                  height: 52.0,
+                  width: iconBadgeSize,
+                  height: iconBadgeSize,
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(18.0),
+                    borderRadius: BorderRadius.circular(iconBadgeRadius),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Positioned(
-                        top: 10.0,
-                        right: 10.0,
+                        top: dotInset,
+                        right: dotInset,
                         child: Container(
-                          width: 10.0,
-                          height: 10.0,
+                          width: dotSize,
+                          height: dotSize,
                           decoration: BoxDecoration(
                             color: accentColor,
                             borderRadius: BorderRadius.circular(99.0),
@@ -614,7 +623,7 @@ class _ActionDashboardCard extends StatelessWidget {
                       Icon(
                         icon,
                         color: accentColor,
-                        size: 28.0,
+                        size: iconSize,
                       ),
                     ],
                   ),
