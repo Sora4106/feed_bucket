@@ -49,3 +49,4 @@ windows/flutter/generated_plugins.cmake
 # Misc
 .DS_Store
 Thumbs.db
+local_preview/
