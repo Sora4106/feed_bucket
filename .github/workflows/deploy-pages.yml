@@ -1,0 +1,81 @@
+name: Build and Deploy Flutter Web
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          cache: true
+
+      - name: Enable Flutter web
+        run: flutter config --enable-web
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run widget smoke test
+        run: flutter test
+
+      - name: Determine GitHub Pages base href
+        id: base_href
+        shell: bash
+        run: |
+          repo_name="${GITHUB_REPOSITORY#*/}"
+          owner_pages_repo="${GITHUB_REPOSITORY_OWNER}.github.io"
+          if [[ "$repo_name" == "$owner_pages_repo" ]]; then
+            echo "value=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=/$repo_name/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Flutter web
+        run: flutter build web --release --base-href "${{ steps.base_href.outputs.value }}"
+
+      - name: Add Pages marker
+        if: github.event_name != 'pull_request'
+        run: touch build/web/.nojekyll
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

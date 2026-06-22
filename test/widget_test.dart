@@ -1,17 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility that Flutter provides. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter_test/flutter_test.dart';
-
+import 'package:feed_bucket/app_state.dart';
+import 'package:feed_bucket/components/app_branding.dart';
+import 'package:feed_bucket/flutter_flow/flutter_flow_theme.dart';
+import 'package:feed_bucket/flutter_flow/internationalization.dart';
 import 'package:feed_bucket/main.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('App boots and shows the localized home title',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    FFAppState.reset();
+
+    await FlutterFlowTheme.initialize();
+    await FFLocalizations.initialize();
+
+    final appState = FFAppState();
+    await appState.initializePersistedState();
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<FFAppState>.value(
+        value: appState,
+        child: MyApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppBranding.appName), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
