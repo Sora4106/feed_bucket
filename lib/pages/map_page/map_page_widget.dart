@@ -59,37 +59,6 @@ class _MapPageWidgetState extends State<MapPageWidget> {
     );
   }
 
-  Future<void> _openInBrowser() async {
-    final farmMapUri = _farmMapUri;
-    if (farmMapUri == null) {
-      return;
-    }
-
-    try {
-      await launchURL(farmMapUri.toString());
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      messenger
-        ?..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              AppBranding.localized(
-                context,
-                zh: '\u7121\u6cd5\u958b\u555f\u5730\u5716\u7db2\u9801\u3002',
-                en: 'Unable to open the map page.',
-              ),
-            ),
-            backgroundColor: AppBranding.dangerColor,
-          ),
-        );
-    }
-  }
-
   Widget _buildMissingFarmState(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -142,52 +111,14 @@ class _MapPageWidgetState extends State<MapPageWidget> {
         radius: 24.0,
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 14.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                onPressed: _openInBrowser,
-                icon: const Icon(Icons.open_in_new_rounded),
-                label: Text(
-                  AppBranding.localized(
-                    context,
-                    zh: '\u7528\u700f\u89bd\u5668\u958b\u555f',
-                    en: 'Open in browser',
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppBranding.actionColor,
-                  side: const BorderSide(
-                    color: AppBranding.actionColor,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 12.0,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const Divider(
-            height: 1.0,
-            thickness: 1.0,
-          ),
-          Expanded(
-            child: FlutterFlowWebView(
-              content: farmMapUri.toString(),
-              html: false,
-              bypass: false,
-              width: double.infinity,
-              height: double.infinity,
-              verticalScroll: false,
-              horizontalScroll: false,
-            ),
-          ),
-        ],
+      child: FlutterFlowWebView(
+        content: farmMapUri.toString(),
+        html: false,
+        bypass: false,
+        width: double.infinity,
+        height: double.infinity,
+        verticalScroll: false,
+        horizontalScroll: false,
       ),
     );
   }

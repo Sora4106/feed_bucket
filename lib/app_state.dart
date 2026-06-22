@@ -159,7 +159,7 @@ class FFAppState extends ChangeNotifier {
     prefs.setBool('ff_check', value);
   }
 
-  String _versionName = '1.0.1';
+  String _versionName = '1.0.2';
   String get versionName => _versionName;
   set versionName(String value) {
     _versionName = value;
