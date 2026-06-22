@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    Alternatively, build your application passing the --base-href parameter
+    specifying the new root path of your web app.
+
+    Fore more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Feed Bucket Monitor">
+
+  
+
+  <meta name="robots" content="noindex" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon-hao.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-hao.png" />
+
+  <!-- Open Graph & SEO tags -->
+  <meta property="og:title" content="Feed Bucket Monitor" />
+  <meta property="og:description" content="Monitoring and management dashboard for feed bucket operations." />
+  <meta property="og:image" content="https://storage.googleapis.com/flutterflow-prod-hosting/og_splash_gradient.png" /> 
+  <meta name="twitter:title" content="Feed Bucket Monitor" />
+  <meta name="twitter:description" content="Monitoring and management dashboard for feed bucket operations." />
+  <meta name="twitter:image" content="https://storage.googleapis.com/flutterflow-prod-hosting/og_splash_gradient.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <title>Feed Bucket Monitor</title>
+  <meta name="description" content="Monitoring and management dashboard for feed bucket operations." />
+    
+
+  <!-- Status Bar color in Safari browser (iOS) and PWA -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0B5CAD">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#123F76">
+
+  <link rel="manifest" href="manifest.json">
+  
+</head>
+<body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('pwa_service_worker.js').catch((error) => {
+          console.warn('PWA service worker registration failed:', error);
+        });
+      });
+    }
+  </script>
+  <script>
+    {{flutter_bootstrap_js}}
+  </script>
+</body>
+</html>
