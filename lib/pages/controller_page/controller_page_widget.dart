@@ -266,7 +266,7 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
       () => DatebaseSQLCall.call(
         mode: 'select',
         key: 'any',
-        sqlString: 'temp,RH,High,feed_weight,update_time',
+        sqlString: 'temp,RH,High,feed_weight,update_time,temp_range,RH_range',
         sqlWhere: 'id=$bucketId',
         sqlFrom: 'controller',
       ),
@@ -484,6 +484,16 @@ class _BucketPowerStatusInfo {
   final String detail;
 }
 
+class _MetricRange {
+  const _MetricRange({
+    required this.min,
+    required this.max,
+  });
+
+  final double min;
+  final double max;
+}
+
 class _ControllerBucketSummaryCard extends StatelessWidget {
   const _ControllerBucketSummaryCard({
     required this.bucketId,
@@ -548,6 +558,51 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
     String fallback = '-',
   }) {
     return _rowValue(_firstRow(jsonBody), path, fallback: fallback);
+  }
+
+  double? _parseMetricValue(String rawValue) {
+    final normalized = rawValue.trim();
+    if (normalized.isEmpty || normalized == '-' || normalized == 'null') {
+      return null;
+    }
+
+    return double.tryParse(normalized);
+  }
+
+  _MetricRange? _parseMetricRange(String rawValue) {
+    final match = RegExp(
+      r'^\s*(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*$',
+    ).firstMatch(rawValue.trim());
+
+    if (match == null) {
+      return null;
+    }
+
+    final start = double.tryParse(match.group(1) ?? '');
+    final end = double.tryParse(match.group(2) ?? '');
+    if (start == null || end == null) {
+      return null;
+    }
+
+    return _MetricRange(
+      min: start <= end ? start : end,
+      max: start <= end ? end : start,
+    );
+  }
+
+  Color _metricValueColor(String value, String rangeValue) {
+    final metricValue = _parseMetricValue(value);
+    final metricRange = _parseMetricRange(rangeValue);
+
+    if (metricValue == null || metricRange == null) {
+      return AppBranding.textStrong;
+    }
+
+    if (metricValue < metricRange.min || metricValue > metricRange.max) {
+      return AppBranding.dangerColor;
+    }
+
+    return AppBranding.successColor;
   }
 
   DateTime? _parseCompactTimestamp(String rawValue) {
@@ -739,6 +794,19 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
   }
 
   Widget _buildMetricArea(BuildContext context, dynamic jsonBody) {
+    final temperatureValue = _jsonValue(jsonBody, r'''$.temp''');
+    final humidityValue = _jsonValue(jsonBody, r'''$.RH''');
+    final temperatureRange = _jsonValue(
+      jsonBody,
+      r'''$.temp_range''',
+      fallback: '',
+    );
+    final humidityRange = _jsonValue(
+      jsonBody,
+      r'''$.RH_range''',
+      fallback: '',
+    );
+
     return Wrap(
       spacing: 10.0,
       runSpacing: 10.0,
@@ -750,7 +818,8 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
             en: 'Temperature',
           ),
           unit: '°C',
-          value: _jsonValue(jsonBody, r'''$.temp'''),
+          value: temperatureValue,
+          valueColor: _metricValueColor(temperatureValue, temperatureRange),
         ),
         _SummaryMetricTile(
           label: AppBranding.localized(
@@ -759,7 +828,8 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
             en: 'Humidity',
           ),
           unit: '%',
-          value: _jsonValue(jsonBody, r'''$.RH'''),
+          value: humidityValue,
+          valueColor: _metricValueColor(humidityValue, humidityRange),
         ),
         _SummaryMetricTile(
           label: AppBranding.localized(
@@ -769,6 +839,7 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
           ),
           unit: 'cm',
           value: _jsonValue(jsonBody, r'''$.High'''),
+          valueColor: AppBranding.textStrong,
         ),
         _SummaryMetricTile(
           label: AppBranding.localized(
@@ -778,6 +849,7 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
           ),
           unit: 'kg',
           value: _jsonValue(jsonBody, r'''$.feed_weight'''),
+          valueColor: AppBranding.textStrong,
         ),
       ],
     );
@@ -1183,11 +1255,13 @@ class _SummaryMetricTile extends StatelessWidget {
     required this.label,
     required this.unit,
     required this.value,
+    required this.valueColor,
   });
 
   final String label;
   final String unit;
   final String value;
+  final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1225,7 +1299,7 @@ class _SummaryMetricTile extends StatelessWidget {
                 TextSpan(
                   text: value,
                   style: theme.headlineSmall.override(
-                    color: AppBranding.textStrong,
+                    color: valueColor,
                     letterSpacing: 0.0,
                     fontWeight: FontWeight.w700,
                   ),
