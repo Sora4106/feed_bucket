@@ -91,6 +91,14 @@ class _FlutterFlowWebViewState extends State<FlutterFlowWebView> {
             },
             webSpecificParams: const WebSpecificParams(
               webAllowFullscreenContent: true,
+              additionalAllowOptions: [
+                'accelerometer',
+                'clipboard-write',
+                'encrypted-media',
+                'geolocation',
+                'gyroscope',
+                'picture-in-picture',
+              ],
             ),
             mobileSpecificParams: MobileSpecificParams(
               debuggingEnabled: false,
