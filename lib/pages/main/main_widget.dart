@@ -24,6 +24,7 @@ class _MainWidgetState extends State<MainWidget> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   bool _didInitializeSelection = false;
+  bool _isOpeningPage = false;
 
   @override
   void initState() {
@@ -99,13 +100,35 @@ class _MainWidgetState extends State<MainWidget> {
     await _model.mainreturn(context);
   }
 
+  Future<void> _runSingleNavigation(Future<void> Function() action) async {
+    if (_isOpeningPage) {
+      return;
+    }
+
+    safeSetState(() {
+      _isOpeningPage = true;
+    });
+
+    try {
+      await action();
+    } finally {
+      if (!mounted) {
+        return;
+      }
+
+      safeSetState(() {
+        _isOpeningPage = false;
+      });
+    }
+  }
+
   Future<void> _openSettings() async {
     await _loadCurrentFarmBuckets();
     if (!mounted) {
       return;
     }
 
-    context.pushNamed(
+    await context.pushNamed(
       SetPageWidget.routeName,
       queryParameters: {
         'opIDlist': serializeParam(
@@ -142,7 +165,7 @@ class _MainWidgetState extends State<MainWidget> {
       return;
     }
 
-    context.pushNamed(
+    await context.pushNamed(
       MapPageWidget.routeName,
       queryParameters: {
         'farmID': serializeParam(
@@ -163,7 +186,7 @@ class _MainWidgetState extends State<MainWidget> {
       return;
     }
 
-    context.pushNamed(
+    await context.pushNamed(
       ControllerPageWidget.routeName,
       queryParameters: {
         'opIDlist': serializeParam(
@@ -198,7 +221,7 @@ class _MainWidgetState extends State<MainWidget> {
       return;
     }
 
-    context.pushNamed(
+    await context.pushNamed(
       SelectPageWidget.routeName,
       queryParameters: {
         'opIDlist': serializeParam(
@@ -313,7 +336,7 @@ class _MainWidgetState extends State<MainWidget> {
         ),
         icon: Icons.settings_rounded,
         accentColor: const Color(0xFF2E8B57),
-        onTap: _openSettings,
+        onTap: () => _runSingleNavigation(_openSettings),
       ),
       _MainActionItem(
         title: AppBranding.localized(
@@ -328,7 +351,7 @@ class _MainWidgetState extends State<MainWidget> {
         ),
         icon: Icons.map_outlined,
         accentColor: const Color(0xFFF3A530),
-        onTap: _openMap,
+        onTap: () => _runSingleNavigation(_openMap),
       ),
       _MainActionItem(
         title: AppBranding.localized(
@@ -343,7 +366,7 @@ class _MainWidgetState extends State<MainWidget> {
         ),
         icon: Icons.precision_manufacturing_rounded,
         accentColor: const Color(0xFF0B5CAD),
-        onTap: _openController,
+        onTap: () => _runSingleNavigation(_openController),
       ),
       _MainActionItem(
         title: AppBranding.localized(
@@ -358,7 +381,7 @@ class _MainWidgetState extends State<MainWidget> {
         ),
         icon: Icons.manage_search_rounded,
         accentColor: const Color(0xFFD64545),
-        onTap: _openHistory,
+        onTap: () => _runSingleNavigation(_openHistory),
       ),
     ];
   }

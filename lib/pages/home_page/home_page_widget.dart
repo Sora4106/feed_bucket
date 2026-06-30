@@ -22,6 +22,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   late HomePageModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isNavigatingToLogin = false;
 
   @override
   void initState() {
@@ -36,17 +37,35 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     super.dispose();
   }
 
-  void _goToLogin() {
+  Future<void> _goToLogin() async {
+    if (_isNavigatingToLogin) {
+      return;
+    }
+
+    safeSetState(() {
+      _isNavigatingToLogin = true;
+    });
+
     final hasRememberedCredentials = FFAppState().check &&
         FFAppState().accountNumber.trim().isNotEmpty &&
         FFAppState().password.isNotEmpty;
 
-    context.pushNamed(
-      LoginWidget.routeName,
-      extra: <String, dynamic>{
-        'autoLogin': hasRememberedCredentials,
-      },
-    );
+    try {
+      await context.pushNamed(
+        LoginWidget.routeName,
+        extra: <String, dynamic>{
+          'autoLogin': hasRememberedCredentials,
+        },
+      );
+    } finally {
+      if (!mounted) {
+        return;
+      }
+
+      safeSetState(() {
+        _isNavigatingToLogin = false;
+      });
+    }
   }
 
   @override
@@ -126,7 +145,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                             SizedBox(
                               width: 260.0,
                               child: ElevatedButton.icon(
-                                onPressed: _goToLogin,
+                                onPressed:
+                                    _isNavigatingToLogin ? null : () => _goToLogin(),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppBranding.actionColor,
                                   foregroundColor: Colors.white,
@@ -138,7 +158,19 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                     borderRadius: BorderRadius.circular(18.0),
                                   ),
                                 ),
-                                icon: const Icon(Icons.login_rounded),
+                                icon: _isNavigatingToLogin
+                                    ? const SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(Icons.login_rounded),
                                 label: Text(
                                   AppBranding.localized(
                                     context,
