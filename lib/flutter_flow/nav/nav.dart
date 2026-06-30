@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -139,7 +140,13 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: LoginWidget.routeName,
           path: LoginWidget.routePath,
-          builder: (context, params) => LoginWidget(),
+          builder: (context, params) => LoginWidget(
+            autoLogin: params.getParam(
+                  'autoLogin',
+                  ParamType.bool,
+                ) ??
+                false,
+          ),
         ),
         FFRoute(
           name: TvWidget.routeName,
@@ -292,8 +299,17 @@ class FFRoute {
                     child,
                   ),
                 )
-              : MaterialPage(
-                  key: state.pageKey, name: state.name, child: child);
+              : isiOS
+                  ? CupertinoPage(
+                      key: state.pageKey,
+                      name: state.name,
+                      child: child,
+                    )
+                  : MaterialPage(
+                      key: state.pageKey,
+                      name: state.name,
+                      child: child,
+                    );
         },
         routes: routes,
       );

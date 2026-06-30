@@ -5,7 +5,6 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:webviewx_plus/webviewx_plus.dart';
@@ -13,10 +12,15 @@ import 'login_model.dart';
 export 'login_model.dart';
 
 class LoginWidget extends StatefulWidget {
-  const LoginWidget({super.key});
+  const LoginWidget({
+    super.key,
+    this.autoLogin = false,
+  });
 
   static String routeName = 'login';
   static String routePath = '/login';
+
+  final bool autoLogin;
 
   @override
   State<LoginWidget> createState() => _LoginWidgetState();
@@ -26,29 +30,32 @@ class _LoginWidgetState extends State<LoginWidget> {
   late LoginModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _didAttemptAutoLogin = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => LoginModel());
 
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      safeSetState(() {
-        _model.checkboxValue = FFAppState().check;
-      });
-      safeSetState(() {
-        _model.emailAddressTextController?.text = FFAppState().accountNumber;
-      });
-      safeSetState(() {
-        _model.passwordTextController?.text = FFAppState().password;
-      });
-    });
-
     _model.emailAddressTextController ??= TextEditingController();
     _model.emailAddressFocusNode ??= FocusNode();
-
     _model.passwordTextController ??= TextEditingController();
     _model.passwordFocusNode ??= FocusNode();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+
+      safeSetState(() {
+        _model.checkboxValue = FFAppState().check;
+        _model.emailAddressTextController?.text = FFAppState().accountNumber;
+        _model.passwordTextController?.text = FFAppState().password;
+      });
+
+      await _maybeAutoLogin();
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
@@ -76,7 +83,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                 child: Text(
                   AppBranding.localized(
                     context,
-                    zh: '確定',
+                    zh: '\u78ba\u5b9a',
                     en: 'OK',
                   ),
                 ),
@@ -88,124 +95,140 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 
+  Future<void> _maybeAutoLogin() async {
+    final hasRememberedCredentials = FFAppState().check &&
+        FFAppState().accountNumber.trim().isNotEmpty &&
+        FFAppState().password.isNotEmpty;
+
+    if (_didAttemptAutoLogin ||
+        !widget.autoLogin ||
+        !hasRememberedCredentials) {
+      return;
+    }
+
+    _didAttemptAutoLogin = true;
+    await _attemptLogin();
+  }
+
   Future<void> _attemptLogin() async {
+    if (_isSubmitting) {
+      return;
+    }
+
+    safeSetState(() {
+      _isSubmitting = true;
+    });
+
     var shouldSetState = false;
 
-    _model.account = await DatebaseSQLCall.call(
-      mode: 'select',
-      key: 'any',
-      sqlString: 'password,farmID',
-      sqlWhere: 'account_number=${_model.emailAddressTextController.text}',
-      sqlFrom: 'user',
-    );
+    try {
+      final accountNumber =
+          (_model.emailAddressTextController?.text ?? '').trim();
+      final password = _model.passwordTextController?.text ?? '';
 
-    shouldSetState = true;
+      _model.account = await DatebaseSQLCall.call(
+        mode: 'select',
+        key: 'any',
+        sqlString: 'password,farmID',
+        sqlWhere: 'account_number=$accountNumber',
+        sqlFrom: 'user',
+      );
+      shouldSetState = true;
 
-    if ((_model.account?.succeeded ?? false)) {
-      final passwordMatches =
-          DatebaseSQLCall.password((_model.account?.jsonBody ?? '')) ==
-              _model.passwordTextController.text;
-
-      if (passwordMatches) {
-        _model.login = await DatebaseSQLCall.call(
-          mode: 'select',
-          key: 'more_condition',
-          sqlString: 'id,name',
-          sqlWhere: DatebaseSQLCall.farmID((_model.account?.jsonBody ?? '')),
-          sqlFrom: 'regional_information',
+      if (!(_model.account?.succeeded ?? false)) {
+        await _showLoginAlert(
+          title: AppBranding.localized(
+            context,
+            zh: '\u67e5\u7121\u5e33\u865f',
+            en: 'Account not found',
+          ),
+          message: AppBranding.localized(
+            context,
+            zh: '\u627e\u4e0d\u5230\u6b64\u5e33\u865f\u8cc7\u6599\uff0c\u8acb\u78ba\u8a8d\u5e33\u865f\u6216\u8cc7\u6599\u5eab\u9023\u7dda\u72c0\u614b\u3002',
+            en: 'No account data was found. Please verify the account or database connection.',
+          ),
         );
-
-        shouldSetState = true;
-        final farmIds =
-            DatebaseSQLCall.id((_model.login?.jsonBody ?? ''))?.toList() ??
-                const <String>[];
-        final farmNames =
-            DatebaseSQLCall.name((_model.login?.jsonBody ?? ''))?.toList() ??
-                const <String>[];
-        final pairCount = farmIds.length < farmNames.length
-            ? farmIds.length
-            : farmNames.length;
-        final visibleFarmIds = farmIds.take(pairCount).toList();
-        final visibleFarmNames = farmNames.take(pairCount).toList();
-        final sortOrder = functions.sortIndicesByNaturalOrder(visibleFarmNames);
-
-        FFAppState().farmID = [
-          for (final index in sortOrder) visibleFarmIds[index],
-        ];
-        FFAppState().name = [
-          for (final index in sortOrder) visibleFarmNames[index],
-        ];
-        safeSetState(() {});
-
-        if (FFAppState().check == true) {
-          FFAppState().accountNumber = _model.emailAddressTextController.text;
-          FFAppState().password = _model.passwordTextController.text;
-          safeSetState(() {});
-        } else {
-          FFAppState().accountNumber = '';
-          FFAppState().password = '';
-          safeSetState(() {});
-          safeSetState(() {
-            _model.emailAddressTextController?.clear();
-            _model.passwordTextController?.clear();
-          });
-        }
-
-        if (!mounted) {
-          return;
-        }
-
-        context.pushNamed(
-          MainWidget.routeName,
-          extra: <String, dynamic>{
-            '__transition_info__': TransitionInfo(
-              hasTransition: true,
-              transitionType: PageTransitionType.fade,
-              duration: const Duration(milliseconds: 100),
-            ),
-          },
-        );
-
-        if (shouldSetState) {
-          safeSetState(() {});
-        }
         return;
       }
 
-      await _showLoginAlert(
-        title: AppBranding.localized(
-          context,
-          zh: '登入失敗',
-          en: 'Login failed',
-        ),
-        message: AppBranding.localized(
-          context,
-          zh: '帳號或密碼錯誤，請重新確認後再試一次。',
-          en: 'Incorrect account or password. Please try again.',
-        ),
+      final passwordMatches =
+          DatebaseSQLCall.password((_model.account?.jsonBody ?? '')) ==
+              password;
+
+      if (!passwordMatches) {
+        await _showLoginAlert(
+          title: AppBranding.localized(
+            context,
+            zh: '\u767b\u5165\u5931\u6557',
+            en: 'Login failed',
+          ),
+          message: AppBranding.localized(
+            context,
+            zh: '\u5e33\u865f\u6216\u5bc6\u78bc\u932f\u8aa4\uff0c\u8acb\u91cd\u65b0\u8f38\u5165\u3002',
+            en: 'Incorrect account or password. Please try again.',
+          ),
+        );
+        return;
+      }
+
+      _model.login = await DatebaseSQLCall.call(
+        mode: 'select',
+        key: 'more_condition',
+        sqlString: 'id,name',
+        sqlWhere: DatebaseSQLCall.farmID((_model.account?.jsonBody ?? '')),
+        sqlFrom: 'regional_information',
       );
+      shouldSetState = true;
+
+      final farmIds =
+          DatebaseSQLCall.id((_model.login?.jsonBody ?? ''))?.toList() ??
+              const <String>[];
+      final farmNames =
+          DatebaseSQLCall.name((_model.login?.jsonBody ?? ''))?.toList() ??
+              const <String>[];
+      final pairCount =
+          farmIds.length < farmNames.length ? farmIds.length : farmNames.length;
+      final visibleFarmIds = farmIds.take(pairCount).toList();
+      final visibleFarmNames = farmNames.take(pairCount).toList();
+      final sortOrder = functions.sortIndicesByNaturalOrder(visibleFarmNames);
+
+      FFAppState().farmID = [
+        for (final index in sortOrder) visibleFarmIds[index],
+      ];
+      FFAppState().name = [
+        for (final index in sortOrder) visibleFarmNames[index],
+      ];
+
+      if (FFAppState().check) {
+        FFAppState().accountNumber = accountNumber;
+        FFAppState().password = password;
+      } else {
+        FFAppState().accountNumber = '';
+        FFAppState().password = '';
+        safeSetState(() {
+          _model.emailAddressTextController?.clear();
+          _model.passwordTextController?.clear();
+        });
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      context.pushNamed(MainWidget.routeName);
+    } finally {
+      if (!mounted) {
+        _isSubmitting = false;
+        return;
+      }
+
+      safeSetState(() {
+        _isSubmitting = false;
+      });
 
       if (shouldSetState) {
         safeSetState(() {});
       }
-      return;
-    }
-
-    await _showLoginAlert(
-      title: AppBranding.localized(
-        context,
-        zh: '找不到帳號',
-        en: 'Account not found',
-      ),
-      message: AppBranding.localized(
-        context,
-        zh: '查無此帳號資料，請確認輸入內容或檢查資料庫連線。',
-        en: 'No account data was found. Please verify the account or database connection.',
-      ),
-    );
-
-    if (shouldSetState) {
-      safeSetState(() {});
     }
   }
 
@@ -225,7 +248,7 @@ class _LoginWidgetState extends State<LoginWidget> {
           context,
           title: AppBranding.localized(
             context,
-            zh: '登入',
+            zh: '\u767b\u5165',
             en: 'Sign In',
           ),
           onBack: () => context.safePop(),
@@ -255,7 +278,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                         Text(
                           AppBranding.localized(
                             context,
-                            zh: '工作人員登入',
+                            zh: '\u4f7f\u7528\u8005\u767b\u5165',
                             en: 'Staff Sign In',
                           ),
                           textAlign: TextAlign.center,
@@ -277,7 +300,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                         Text(
                           AppBranding.localized(
                             context,
-                            zh: '請輸入帳號與密碼後進入監控主畫面。',
+                            zh: '\u8f38\u5165\u5e33\u865f\u8207\u5bc6\u78bc\u5f8c\u5373\u53ef\u958b\u555f\u76e3\u6e2c\u4e3b\u9801\u3002',
                             en: 'Use your account and password to open the monitoring dashboard.',
                           ),
                           textAlign: TextAlign.center,
@@ -292,13 +315,13 @@ class _LoginWidgetState extends State<LoginWidget> {
                         TextFormField(
                           controller: _model.emailAddressTextController,
                           focusNode: _model.emailAddressFocusNode,
-                          autofocus: true,
+                          autofocus: !widget.autoLogin,
                           autofillHints: const [AutofillHints.username],
                           obscureText: false,
                           decoration: InputDecoration(
                             labelText: AppBranding.localized(
                               context,
-                              zh: '帳號',
+                              zh: '\u5e33\u865f',
                               en: 'Account',
                             ),
                             labelStyle: FlutterFlowTheme.of(context)
@@ -345,7 +368,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                           decoration: InputDecoration(
                             labelText: AppBranding.localized(
                               context,
-                              zh: '密碼',
+                              zh: '\u5bc6\u78bc',
                               en: 'Password',
                             ),
                             labelStyle: FlutterFlowTheme.of(context)
@@ -416,17 +439,13 @@ class _LoginWidgetState extends State<LoginWidget> {
                                     FlutterFlowTheme.of(context).alternate,
                               ),
                               child: Checkbox(
-                                value: _model.checkboxValue ??= true,
+                                value: _model.checkboxValue ??=
+                                    FFAppState().check,
                                 onChanged: (newValue) async {
                                   safeSetState(
                                       () => _model.checkboxValue = newValue!);
-                                  if (newValue!) {
-                                    FFAppState().check = _model.checkboxValue!;
-                                    safeSetState(() {});
-                                  } else {
-                                    FFAppState().check = false;
-                                    safeSetState(() {});
-                                  }
+                                  FFAppState().check = newValue ?? false;
+                                  safeSetState(() {});
                                 },
                                 side: BorderSide(
                                   width: 2.0,
@@ -440,7 +459,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                             Text(
                               AppBranding.localized(
                                 context,
-                                zh: '記住帳號密碼',
+                                zh: '\u8a18\u4f4f\u5e33\u865f\u5bc6\u78bc',
                                 en: 'Remember account',
                               ),
                               style: FlutterFlowTheme.of(context)
@@ -456,7 +475,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                         SizedBox(
                           height: 52.0,
                           child: ElevatedButton.icon(
-                            onPressed: _attemptLogin,
+                            onPressed: _isSubmitting ? null : _attemptLogin,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppBranding.actionColor,
                               foregroundColor: Colors.white,
@@ -464,11 +483,22 @@ class _LoginWidgetState extends State<LoginWidget> {
                                 borderRadius: BorderRadius.circular(16.0),
                               ),
                             ),
-                            icon: const Icon(Icons.login_rounded),
+                            icon: _isSubmitting
+                                ? const SizedBox(
+                                    width: 20.0,
+                                    height: 20.0,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(Icons.login_rounded),
                             label: Text(
                               AppBranding.localized(
                                 context,
-                                zh: '登入系統',
+                                zh: '\u767b\u5165\u7cfb\u7d71',
                                 en: 'Sign In',
                               ),
                               style: FlutterFlowTheme.of(context)

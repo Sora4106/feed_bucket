@@ -51,6 +51,13 @@ jobs:
       - name: Build Flutter web
         run: flutter build web --release --base-href "${{ steps.base_href.outputs.value }}"
 
+      - name: Stamp deployed app version
+        shell: bash
+        run: |
+          app_version="${GITHUB_SHA::7}"
+          sed -i "s/__APP_VERSION__/${app_version}/g" build/web/index.html
+          sed -i "s/__APP_VERSION__/${app_version}/g" build/web/pwa_service_worker.js
+
       - name: Add Pages marker
         if: github.event_name != 'pull_request'
         run: touch build/web/.nojekyll

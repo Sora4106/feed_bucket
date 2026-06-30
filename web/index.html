@@ -54,13 +54,155 @@
 </head>
 <body>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('pwa_service_worker.js').catch((error) => {
-          console.warn('PWA service worker registration failed:', error);
+    (() => {
+      if (!('serviceWorker' in navigator)) {
+        return;
+      }
+
+      const appVersion = '__APP_VERSION__';
+      const serviceWorkerUrl = `pwa_service_worker.js?v=${appVersion}`;
+      let isReloadingForUpdate = false;
+
+      const removeUpdateBanner = () => {
+        document.getElementById('feed-bucket-update-banner')?.remove();
+      };
+
+      const requestActivation = (worker) => {
+        worker?.postMessage({ type: 'SKIP_WAITING' });
+      };
+
+      const showUpdateBanner = (registration) => {
+        if (!registration?.waiting) {
+          return;
+        }
+
+        if (document.getElementById('feed-bucket-update-banner')) {
+          return;
+        }
+
+        const banner = document.createElement('div');
+        banner.id = 'feed-bucket-update-banner';
+        banner.style.position = 'fixed';
+        banner.style.left = '16px';
+        banner.style.right = '16px';
+        banner.style.bottom = '16px';
+        banner.style.zIndex = '9999';
+        banner.style.display = 'flex';
+        banner.style.alignItems = 'center';
+        banner.style.justifyContent = 'space-between';
+        banner.style.gap = '12px';
+        banner.style.padding = '14px 16px';
+        banner.style.borderRadius = '16px';
+        banner.style.background = 'rgba(11, 92, 173, 0.96)';
+        banner.style.color = '#FFFFFF';
+        banner.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.18)';
+        banner.style.backdropFilter = 'blur(10px)';
+
+        const message = document.createElement('div');
+        message.textContent = '偵測到新版本，按下更新後會重新載入頁面。';
+        message.style.fontSize = '14px';
+        message.style.lineHeight = '1.4';
+
+        const actionGroup = document.createElement('div');
+        actionGroup.style.display = 'flex';
+        actionGroup.style.alignItems = 'center';
+        actionGroup.style.gap = '8px';
+
+        const laterButton = document.createElement('button');
+        laterButton.type = 'button';
+        laterButton.textContent = '稍後';
+        laterButton.style.border = '0';
+        laterButton.style.borderRadius = '999px';
+        laterButton.style.padding = '9px 14px';
+        laterButton.style.background = 'rgba(255, 255, 255, 0.18)';
+        laterButton.style.color = '#FFFFFF';
+        laterButton.style.cursor = 'pointer';
+        laterButton.onclick = removeUpdateBanner;
+
+        const updateButton = document.createElement('button');
+        updateButton.type = 'button';
+        updateButton.textContent = '立即更新';
+        updateButton.style.border = '0';
+        updateButton.style.borderRadius = '999px';
+        updateButton.style.padding = '9px 14px';
+        updateButton.style.background = '#FFFFFF';
+        updateButton.style.color = '#0B5CAD';
+        updateButton.style.fontWeight = '700';
+        updateButton.style.cursor = 'pointer';
+        updateButton.onclick = () => {
+          updateButton.disabled = true;
+          updateButton.textContent = '更新中...';
+          requestActivation(registration.waiting);
+        };
+
+        actionGroup.appendChild(laterButton);
+        actionGroup.appendChild(updateButton);
+        banner.appendChild(message);
+        banner.appendChild(actionGroup);
+        document.body.appendChild(banner);
+      };
+
+      const monitorRegistration = (registration) => {
+        if (!registration) {
+          return;
+        }
+
+        if (!navigator.serviceWorker.controller && registration.waiting) {
+          requestActivation(registration.waiting);
+        } else if (registration.waiting) {
+          showUpdateBanner(registration);
+        }
+
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (!newWorker) {
+            return;
+          }
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state !== 'installed') {
+              return;
+            }
+
+            if (!navigator.serviceWorker.controller) {
+              requestActivation(registration.waiting ?? newWorker);
+              return;
+            }
+
+            showUpdateBanner(registration);
+          });
         });
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (isReloadingForUpdate) {
+          return;
+        }
+
+        isReloadingForUpdate = true;
+        removeUpdateBanner();
+        window.location.reload();
       });
-    }
+
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register(
+            serviceWorkerUrl,
+          );
+
+          monitorRegistration(registration);
+          setInterval(() => registration.update(), 60000);
+
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              registration.update();
+            }
+          });
+        } catch (error) {
+          console.warn('PWA service worker registration failed:', error);
+        }
+      });
+    })();
   </script>
   <script>
     {{flutter_bootstrap_js}}

@@ -37,13 +37,14 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   }
 
   void _goToLogin() {
+    final hasRememberedCredentials = FFAppState().check &&
+        FFAppState().accountNumber.trim().isNotEmpty &&
+        FFAppState().password.isNotEmpty;
+
     context.pushNamed(
       LoginWidget.routeName,
       extra: <String, dynamic>{
-        '__transition_info__': TransitionInfo(
-          hasTransition: true,
-          transitionType: PageTransitionType.fade,
-        ),
+        'autoLogin': hasRememberedCredentials,
       },
     );
   }

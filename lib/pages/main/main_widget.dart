@@ -128,12 +128,6 @@ class _MainWidgetState extends State<MainWidget> {
           isList: true,
         ),
       }.withoutNulls,
-      extra: <String, dynamic>{
-        '__transition_info__': const TransitionInfo(
-          hasTransition: true,
-          transitionType: PageTransitionType.fade,
-        ),
-      },
     );
   }
 
@@ -160,12 +154,6 @@ class _MainWidgetState extends State<MainWidget> {
           ParamType.String,
         ),
       }.withoutNulls,
-      extra: <String, dynamic>{
-        '__transition_info__': const TransitionInfo(
-          hasTransition: true,
-          transitionType: PageTransitionType.fade,
-        ),
-      },
     );
   }
 
@@ -198,12 +186,6 @@ class _MainWidgetState extends State<MainWidget> {
           isList: true,
         ),
       }.withoutNulls,
-      extra: <String, dynamic>{
-        '__transition_info__': const TransitionInfo(
-          hasTransition: true,
-          transitionType: PageTransitionType.fade,
-        ),
-      },
     );
   }
 
@@ -234,12 +216,6 @@ class _MainWidgetState extends State<MainWidget> {
           isList: true,
         ),
       }.withoutNulls,
-      extra: <String, dynamic>{
-        '__transition_info__': const TransitionInfo(
-          hasTransition: true,
-          transitionType: PageTransitionType.fade,
-        ),
-      },
     );
   }
 
