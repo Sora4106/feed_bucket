@@ -1,9 +1,7 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import 'dart:async';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 class AppBranding {
   const AppBranding._();
@@ -161,32 +159,10 @@ class AppBranding {
     required Widget child,
     VoidCallback? onBack,
   }) {
-    final shouldEnable =
-        onBack != null && Theme.of(context).platform == TargetPlatform.iOS;
-    final isIOSWeb = shouldEnable && isWeb;
-
-    if (!shouldEnable) {
-      return child;
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        child,
-        Positioned(
-          // In iOS PWA, the system edge-swipe gesture can fire together with
-          // our custom back handler. Nudging the hot zone slightly inward keeps
-          // the gesture feeling "edge-based" while avoiding a double back.
-          left: isIOSWeb ? 10.0 : 0.0,
-          top: 0.0,
-          bottom: 0.0,
-          width: isIOSWeb ? 24.0 : 18.0,
-          child: PointerInterceptor(
-            child: _EdgeSwipeBackRegion(onBack: onBack),
-          ),
-        ),
-      ],
-    );
+    // iOS PWA edge-swipe navigation proved unreliable in practice: it could
+    // double-trigger, interfere with page controls, and block the app-bar back
+    // button. Keep navigation explicit and consistent via the back arrow only.
+    return child;
   }
 
   static BoxDecoration panelDecoration(
@@ -450,131 +426,6 @@ class _HintMessageButtonState extends State<_HintMessageButton> {
           size: 18.0,
         ),
       ),
-    );
-  }
-}
-
-class _EdgeSwipeBackRegion extends StatefulWidget {
-  const _EdgeSwipeBackRegion({
-    required this.onBack,
-  });
-
-  final VoidCallback onBack;
-
-  @override
-  State<_EdgeSwipeBackRegion> createState() => _EdgeSwipeBackRegionState();
-}
-
-class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
-  static const double _triggerDistance = 56.0;
-  static const double _triggerVelocity = 500.0;
-  static const Duration _triggerCooldown = Duration(milliseconds: 700);
-  static const Duration _iOSWebSystemBackGracePeriod =
-      Duration(milliseconds: 180);
-
-  static DateTime? _lastTriggeredAt;
-
-  double _dragDistance = 0.0;
-  bool _didTrigger = false;
-  String _routeAtDragStart = '';
-  Timer? _pendingTriggerTimer;
-
-  bool get _usesIOSWebGestureGracePeriod =>
-      isWeb && Theme.of(context).platform == TargetPlatform.iOS;
-
-  @override
-  void dispose() {
-    _pendingTriggerTimer?.cancel();
-    super.dispose();
-  }
-
-  void _handleDragStart(DragStartDetails details) {
-    _pendingTriggerTimer?.cancel();
-    _dragDistance = 0.0;
-    _didTrigger = false;
-    _routeAtDragStart = getCurrentRoute(context);
-  }
-
-  void _handleDragUpdate(DragUpdateDetails details) {
-    if (_didTrigger) {
-      return;
-    }
-
-    final delta = details.primaryDelta ?? 0.0;
-    _dragDistance = (_dragDistance + delta).clamp(0.0, double.infinity);
-  }
-
-  void _handleDragEnd(DragEndDetails details) {
-    if (_didTrigger) {
-      return;
-    }
-
-    final velocity = details.primaryVelocity ?? 0.0;
-    if (_dragDistance >= _triggerDistance || velocity >= _triggerVelocity) {
-      if (_routeChangedSinceDragStart()) {
-        return;
-      }
-
-      if (_usesIOSWebGestureGracePeriod) {
-        // iOS PWA can deliver its native history-back gesture just before
-        // Flutter receives drag end. Wait briefly so we only run one back.
-        _pendingTriggerTimer?.cancel();
-        _pendingTriggerTimer = Timer(
-          _iOSWebSystemBackGracePeriod,
-          () {
-            if (!mounted || _didTrigger || _routeChangedSinceDragStart()) {
-              return;
-            }
-            _triggerBack();
-          },
-        );
-        return;
-      }
-
-      _triggerBack();
-    }
-  }
-
-  void _handleDragCancel() {
-    _pendingTriggerTimer?.cancel();
-    _dragDistance = 0.0;
-    _didTrigger = false;
-  }
-
-  bool _routeChangedSinceDragStart() {
-    final routeAtDragStart = _routeAtDragStart;
-    if (routeAtDragStart.isEmpty) {
-      return false;
-    }
-
-    final currentRoute = getCurrentRoute(context);
-    return currentRoute.isNotEmpty && currentRoute != routeAtDragStart;
-  }
-
-  void _triggerBack() {
-    final now = DateTime.now();
-    if (_lastTriggeredAt != null &&
-        now.difference(_lastTriggeredAt!) < _triggerCooldown) {
-      return;
-    }
-
-    _pendingTriggerTimer?.cancel();
-    _pendingTriggerTimer = null;
-    _lastTriggeredAt = now;
-    _didTrigger = true;
-    widget.onBack();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      dragStartBehavior: DragStartBehavior.down,
-      onHorizontalDragStart: _handleDragStart,
-      onHorizontalDragUpdate: _handleDragUpdate,
-      onHorizontalDragEnd: _handleDragEnd,
-      onHorizontalDragCancel: _handleDragCancel,
-      child: const SizedBox.expand(),
     );
   }
 }
