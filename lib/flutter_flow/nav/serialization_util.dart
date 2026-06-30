@@ -51,38 +51,22 @@ String? serializeParam(
           .toList();
       return json.encode(serializedValues);
     }
-    String? data;
-    switch (paramType) {
-      case ParamType.int:
-        data = param.toString();
-      case ParamType.double:
-        data = param.toString();
-      case ParamType.String:
-        data = param;
-      case ParamType.bool:
-        data = param ? 'true' : 'false';
-      case ParamType.DateTime:
-        data = dateTimeToString(param as DateTime);
-      case ParamType.DateTimeRange:
-        data = dateTimeRangeToString(param as DateTimeRange);
-      case ParamType.LatLng:
-        data = (param as LatLng).serialize();
-      case ParamType.Color:
-        data = (param as Color).toCssString();
-      case ParamType.FFPlace:
-        data = placeToString(param as FFPlace);
-      case ParamType.FFUploadedFile:
-        data = uploadedFileToString(param as FFUploadedFile);
-      case ParamType.JSON:
-        data = json.encode(param);
-
-      case ParamType.DataStruct:
-        data = param is BaseStruct ? param.serialize() : null;
-
-      default:
-        data = null;
-    }
-    return data;
+    return switch (paramType) {
+      ParamType.int => param.toString(),
+      ParamType.double => param.toString(),
+      ParamType.String => param,
+      ParamType.bool => param ? 'true' : 'false',
+      ParamType.DateTime => dateTimeToString(param as DateTime),
+      ParamType.DateTimeRange =>
+        dateTimeRangeToString(param as DateTimeRange),
+      ParamType.LatLng => (param as LatLng).serialize(),
+      ParamType.Color => (param as Color).toCssString(),
+      ParamType.FFPlace => placeToString(param as FFPlace),
+      ParamType.FFUploadedFile =>
+        uploadedFileToString(param as FFUploadedFile),
+      ParamType.JSON => json.encode(param),
+      ParamType.DataStruct => param is BaseStruct ? param.serialize() : null,
+    };
   } catch (e) {
     print('Error serializing parameter: $e');
     return null;
@@ -241,13 +225,9 @@ dynamic deserializeParam<T>(
         return uploadedFileFromString(param);
       case ParamType.JSON:
         return json.decode(param);
-
       case ParamType.DataStruct:
         final data = json.decode(param) as Map<String, dynamic>? ?? {};
         return structBuilder != null ? structBuilder(data) : null;
-
-      default:
-        return null;
     }
   } catch (e) {
     print('Error deserializing parameter: $e');
