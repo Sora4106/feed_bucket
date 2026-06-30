@@ -163,6 +163,7 @@ class AppBranding {
   }) {
     final shouldEnable =
         onBack != null && Theme.of(context).platform == TargetPlatform.iOS;
+    final isIOSWeb = shouldEnable && isWeb;
 
     if (!shouldEnable) {
       return child;
@@ -173,10 +174,13 @@ class AppBranding {
       children: [
         child,
         Positioned(
-          left: 0.0,
+          // In iOS PWA, the system edge-swipe gesture can fire together with
+          // our custom back handler. Nudging the hot zone slightly inward keeps
+          // the gesture feeling "edge-based" while avoiding a double back.
+          left: isIOSWeb ? 10.0 : 0.0,
           top: 0.0,
           bottom: 0.0,
-          width: 18.0,
+          width: isIOSWeb ? 24.0 : 18.0,
           child: PointerInterceptor(
             child: _EdgeSwipeBackRegion(onBack: onBack),
           ),
@@ -464,6 +468,9 @@ class _EdgeSwipeBackRegion extends StatefulWidget {
 class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
   static const double _triggerDistance = 56.0;
   static const double _triggerVelocity = 500.0;
+  static const Duration _triggerCooldown = Duration(milliseconds: 700);
+
+  static DateTime? _lastTriggeredAt;
 
   double _dragDistance = 0.0;
   bool _didTrigger = false;
@@ -478,11 +485,8 @@ class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
       return;
     }
 
-    _dragDistance += details.primaryDelta ?? 0.0;
-    if (_dragDistance >= _triggerDistance) {
-      _didTrigger = true;
-      widget.onBack();
-    }
+    final delta = details.primaryDelta ?? 0.0;
+    _dragDistance = (_dragDistance + delta).clamp(0.0, double.infinity);
   }
 
   void _handleDragEnd(DragEndDetails details) {
@@ -492,9 +496,20 @@ class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
 
     final velocity = details.primaryVelocity ?? 0.0;
     if (_dragDistance >= _triggerDistance || velocity >= _triggerVelocity) {
-      _didTrigger = true;
-      widget.onBack();
+      _triggerBack();
     }
+  }
+
+  void _triggerBack() {
+    final now = DateTime.now();
+    if (_lastTriggeredAt != null &&
+        now.difference(_lastTriggeredAt!) < _triggerCooldown) {
+      return;
+    }
+
+    _lastTriggeredAt = now;
+    _didTrigger = true;
+    widget.onBack();
   }
 
   @override
