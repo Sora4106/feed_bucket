@@ -158,7 +158,7 @@ class _MapPageWidgetState extends State<MapPageWidget> {
                       AppBranding.buildInfoBanner(
                         context,
                         title: valueOrDefault<String>(widget.farmName, '-'),
-                        subtitle: AppBranding.localized(
+                        hintMessage: AppBranding.localized(
                           context,
                           zh: '\u6703\u4f9d\u64da\u76ee\u524d\u8fb2\u5834\u8f09\u5165\u4f3a\u670d\u5668\u7248\u5730\u5716\uff0c\u53ef\u6aa2\u8996\u5b9a\u4f4d\u3001\u72c0\u614b\u8207\u8def\u7dda\u8cc7\u8a0a\u3002',
                           en: 'Loads the server-hosted farm map for the selected farm, including location, status, and route details.',

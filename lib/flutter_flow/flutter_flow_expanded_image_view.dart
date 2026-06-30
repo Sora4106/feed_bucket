@@ -1,18 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 
-class FlutterFlowExpandedImageView extends StatelessWidget {
+class FlutterFlowExpandedImageView extends StatefulWidget {
   const FlutterFlowExpandedImageView({
     required this.image,
     this.allowRotation = false,
     this.useHeroAnimation = true,
     this.tag,
+    this.preferredOrientationsOnOpen,
+    this.restoreOrientationsOnClose,
   });
 
   final Widget image;
   final bool allowRotation;
   final bool useHeroAnimation;
   final Object? tag;
+  final List<DeviceOrientation>? preferredOrientationsOnOpen;
+  final List<DeviceOrientation>? restoreOrientationsOnClose;
+
+  @override
+  State<FlutterFlowExpandedImageView> createState() =>
+      _FlutterFlowExpandedImageViewState();
+}
+
+class _FlutterFlowExpandedImageViewState
+    extends State<FlutterFlowExpandedImageView> {
+  @override
+  void initState() {
+    super.initState();
+    _setPreferredOrientations(widget.preferredOrientationsOnOpen);
+  }
+
+  @override
+  void dispose() {
+    _setPreferredOrientations(widget.restoreOrientationsOnClose);
+    super.dispose();
+  }
+
+  void _setPreferredOrientations(List<DeviceOrientation>? orientations) {
+    if (orientations == null || orientations.isEmpty) {
+      return;
+    }
+    SystemChrome.setPreferredOrientations(orientations);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +59,16 @@ class FlutterFlowExpandedImageView extends StatelessWidget {
               child: PhotoView.customChild(
                 minScale: 1.0,
                 maxScale: 3.0,
-                enableRotation: allowRotation,
-                heroAttributes: useHeroAnimation
-                    ? PhotoViewHeroAttributes(tag: tag!)
+                enableRotation: widget.allowRotation,
+                heroAttributes: widget.useHeroAnimation
+                    ? PhotoViewHeroAttributes(tag: widget.tag!)
                     : null,
                 onScaleEnd: (context, details, value) {
                   if (value.scale! < 0.3) {
                     Navigator.pop(context);
                   }
                 },
-                child: image,
+                child: widget.image,
               ),
             ),
             Row(

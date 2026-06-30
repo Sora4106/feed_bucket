@@ -5,8 +5,10 @@ import '/flutter_flow/flutter_flow_expanded_image_view.dart';
 import '/flutter_flow/instant_timer.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'controller_page_model.dart';
 export 'controller_page_model.dart';
 
@@ -40,6 +42,8 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final Map<String, Future<ApiCallResponse>> _bucketMetricsFutures = {};
   final Map<String, Future<ApiCallResponse>> _bucketImageFutures = {};
+  final Map<String, List<Timer>> _photoRefreshTimers = {};
+  final Set<String> _photoRefreshingBucketIds = <String>{};
   String? _renamingBucketId;
   InstantTimer? _refreshTimer;
 
@@ -62,12 +66,25 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
       final activeIds = (widget.idList ?? const <String>[]).toSet();
       _bucketMetricsFutures.removeWhere((id, _) => !activeIds.contains(id));
       _bucketImageFutures.removeWhere((id, _) => !activeIds.contains(id));
+      final inactiveIds = _photoRefreshTimers.keys
+          .where((id) => !activeIds.contains(id))
+          .toList(growable: false);
+      for (final id in inactiveIds) {
+        _cancelPhotoRefreshTimers(id);
+      }
+      _photoRefreshingBucketIds.removeWhere((id) => !activeIds.contains(id));
     }
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    for (final timers in _photoRefreshTimers.values) {
+      for (final timer in timers) {
+        timer.cancel();
+      }
+    }
+    _photoRefreshTimers.clear();
     _model.dispose();
     super.dispose();
   }
@@ -135,6 +152,42 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
     _bucketMetricsFutures.clear();
     _bucketImageFutures.clear();
     safeSetState(() {});
+  }
+
+  void _refreshBucketPhoto(String bucketId) {
+    _bucketImageFutures.remove(bucketId);
+    safeSetState(() {});
+  }
+
+  void _cancelPhotoRefreshTimers(String bucketId) {
+    final timers = _photoRefreshTimers.remove(bucketId);
+    if (timers == null) {
+      return;
+    }
+    for (final timer in timers) {
+      timer.cancel();
+    }
+  }
+
+  void _schedulePhotoRefreshPolls(String bucketId) {
+    _cancelPhotoRefreshTimers(bucketId);
+
+    final timers = <Timer>[];
+    for (final delay in const [
+      Duration(seconds: 2),
+      Duration(seconds: 5),
+      Duration(seconds: 8),
+    ]) {
+      timers.add(
+        Timer(delay, () {
+          if (!mounted) {
+            return;
+          }
+          _refreshBucketPhoto(bucketId);
+        }),
+      );
+    }
+    _photoRefreshTimers[bucketId] = timers;
   }
 
   void _showSnackBar(
@@ -240,6 +293,54 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
         context,
         zh: '名稱未成功寫回資料庫，請再試一次',
         en: 'The bucket name was not written back to the database',
+      ),
+      isError: true,
+    );
+  }
+
+  Future<void> _requestPhotoRefresh(_BucketEntry bucket) async {
+    if (_photoRefreshingBucketIds.contains(bucket.id)) {
+      return;
+    }
+
+    setState(() {
+      _photoRefreshingBucketIds.add(bucket.id);
+    });
+
+    final response = await DatebaseSQLCall.call(
+      mode: 'update',
+      key: 'any',
+      sqlString: 'cam_switchC=Y',
+      sqlWhere: 'id=${bucket.id}',
+      sqlSheet: 'ipcam',
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _photoRefreshingBucketIds.remove(bucket.id);
+    });
+
+    if (response.succeeded) {
+      _refreshBucketPhoto(bucket.id);
+      _schedulePhotoRefreshPolls(bucket.id);
+      _showSnackBar(
+        AppBranding.localized(
+          context,
+          zh: '已送出刷新照片指令，請稍候更新',
+          en: 'Photo refresh requested. Please wait a moment.',
+        ),
+      );
+      return;
+    }
+
+    _showSnackBar(
+      AppBranding.localized(
+        context,
+        zh: '刷新照片失敗，請稍後再試',
+        en: 'Unable to refresh the photo right now',
       ),
       isError: true,
     );
@@ -353,28 +454,22 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppBranding.localized(
+          AppBranding.buildTitleWithHint(
+            context,
+            title: AppBranding.localized(
               context,
               zh: '飼料桶資訊卡',
               en: 'Bucket Cards',
+            ),
+            hintMessage: AppBranding.localized(
+              context,
+              zh: '往下滑即可比較每一桶的照片、溫度、濕度、高度與餵食重量；點擊照片可全畫面放大。',
+              en: 'Scroll to review each bucket photo together with temperature, humidity, height, and feed weight.',
             ),
             style: theme.titleMedium.override(
               color: AppBranding.textStrong,
               letterSpacing: 0.0,
               fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6.0),
-          Text(
-            AppBranding.localized(
-              context,
-              zh: '往下滑即可比較每一桶的照片、溫度、濕度、高度與餵食重量；點擊照片可全畫面放大。',
-              en: 'Scroll to review each bucket photo together with temperature, humidity, height, and feed weight.',
-            ),
-            style: theme.bodyMedium.override(
-              color: AppBranding.textMuted,
-              letterSpacing: 0.0,
             ),
           ),
           const SizedBox(height: 14.0),
@@ -397,10 +492,14 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
                         formatImageDate: _formatImageDate,
                         heroTag: 'bucket-photo-${bucket.id}',
                         isRenaming: _renamingBucketId == bucket.id,
+                        isRefreshingPhoto:
+                            _photoRefreshingBucketIds.contains(bucket.id),
                         onRenamePressed: () => _renameBucket(
                           index: index,
                           bucket: bucket,
                         ),
+                        onRefreshPhotoPressed: () =>
+                            _requestPhotoRefresh(bucket),
                       );
                     },
                   ),
@@ -439,7 +538,7 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
                   child: AppBranding.buildInfoBanner(
                     context,
                     title: valueOrDefault<String>(widget.farmName, '-'),
-                    subtitle: AppBranding.localized(
+                    hintMessage: AppBranding.localized(
                       context,
                       zh: '在同一個畫面查看每一桶的最新照片與感測器數據。',
                       en: 'Review the latest photo and sensor details for each bucket in one place.',
@@ -477,11 +576,13 @@ class _BucketPowerStatusInfo {
     required this.label,
     required this.color,
     required this.detail,
+    this.isRefreshing = false,
   });
 
   final String label;
   final Color color;
   final String detail;
+  final bool isRefreshing;
 }
 
 class _MetricRange {
@@ -503,7 +604,9 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
     required this.formatImageDate,
     required this.heroTag,
     required this.isRenaming,
+    required this.isRefreshingPhoto,
     required this.onRenamePressed,
+    required this.onRefreshPhotoPressed,
   });
 
   final String bucketId;
@@ -513,7 +616,9 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
   final String Function(String?) formatImageDate;
   final String heroTag;
   final bool isRenaming;
+  final bool isRefreshingPhoto;
   final Future<void> Function() onRenamePressed;
+  final Future<void> Function() onRefreshPhotoPressed;
 
   static const Duration _powerHealthyWindow = Duration(hours: 12);
 
@@ -629,36 +734,27 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
     required bool isLoading,
     required String rawUpdateTime,
   }) {
-    if (isLoading) {
-      return _BucketPowerStatusInfo(
-        label: AppBranding.localized(
-          context,
-          zh: '更新中',
-          en: 'Updating',
-        ),
-        color: AppBranding.warningColor,
-        detail: AppBranding.localized(
-          context,
-          zh: '正在讀取最新更新時間',
-          en: 'Reading latest update timestamp',
-        ),
-      );
-    }
-
     final parsedDate = _parseCompactTimestamp(rawUpdateTime);
     if (parsedDate == null) {
       return _BucketPowerStatusInfo(
         label: AppBranding.localized(
           context,
-          zh: '無更新資料',
-          en: 'No Data',
+          zh: '電源異常',
+          en: 'Power Alert',
         ),
-        color: AppBranding.warningColor,
-        detail: AppBranding.localized(
-          context,
-          zh: '尚未收到可判斷狀態的更新時間',
-          en: 'No update timestamp is available yet',
-        ),
+        color: AppBranding.dangerColor,
+        detail: isLoading
+            ? AppBranding.localized(
+                context,
+                zh: '正在讀取最新更新時間',
+                en: 'Reading latest update timestamp',
+              )
+            : AppBranding.localized(
+                context,
+                zh: '尚未收到可判斷狀態的更新時間',
+                en: 'No update timestamp is available yet',
+              ),
+        isRefreshing: isLoading,
       );
     }
 
@@ -674,6 +770,7 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
       color: isHealthy ? AppBranding.successColor : AppBranding.dangerColor,
       detail:
           '${AppBranding.localized(context, zh: '資料更新', en: 'Data update')}: ${functions.dateMode(rawUpdateTime, 'date')} ${functions.dateMode(rawUpdateTime, 'time')}',
+      isRefreshing: isLoading,
     );
   }
 
@@ -742,9 +839,15 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12.0),
-                      _SummaryStatusPill(
-                        label: statusInfo.label,
-                        color: statusInfo.color,
+                      _RefreshingStatusPillGroup(
+                        isRefreshing: statusInfo.isRefreshing,
+                        refreshingLabel: AppBranding.localized(
+                          context,
+                          zh: '更新中',
+                          en: 'Updating',
+                        ),
+                        statusLabel: statusInfo.label,
+                        statusColor: statusInfo.color,
                       ),
                     ],
                   ),
@@ -762,6 +865,8 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
                       photoFuture: photoFuture,
                       formatImageDate: formatImageDate,
                       heroTag: heroTag,
+                      isRefreshingPhoto: isRefreshingPhoto,
+                      onRefreshPhotoPressed: onRefreshPhotoPressed,
                     ),
                     const SizedBox(height: 12.0),
                     _buildMetricArea(context, metricsJson),
@@ -775,6 +880,8 @@ class _ControllerBucketSummaryCard extends StatelessWidget {
                             photoFuture: photoFuture,
                             formatImageDate: formatImageDate,
                             heroTag: heroTag,
+                            isRefreshingPhoto: isRefreshingPhoto,
+                            onRefreshPhotoPressed: onRefreshPhotoPressed,
                           ),
                         ),
                         const SizedBox(width: 14.0),
@@ -861,11 +968,15 @@ class _ControllerPhotoPreview extends StatelessWidget {
     required this.photoFuture,
     required this.formatImageDate,
     required this.heroTag,
+    required this.isRefreshingPhoto,
+    required this.onRefreshPhotoPressed,
   });
 
   final Future<ApiCallResponse> photoFuture;
   final String Function(String?) formatImageDate;
   final String heroTag;
+  final bool isRefreshingPhoto;
+  final Future<void> Function() onRefreshPhotoPressed;
 
   static const String _placeholderAsset =
       'assets/images/Default_Image_depicts_a_large_industrialstyle_white_plastic_ho_1.png';
@@ -881,6 +992,13 @@ class _ControllerPhotoPreview extends StatelessWidget {
           allowRotation: true,
           tag: heroTag,
           useHeroAnimation: true,
+          preferredOrientationsOnOpen: const [
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ],
+          restoreOrientationsOnClose: const [
+            DeviceOrientation.portraitUp,
+          ],
         ),
       ),
     );
@@ -1025,6 +1143,11 @@ class _ControllerPhotoPreview extends StatelessWidget {
                       letterSpacing: 0.0,
                     ),
                   ),
+                ),
+                const SizedBox(width: 8.0),
+                _RefreshPhotoButton(
+                  isRefreshing: isRefreshingPhoto,
+                  onPressed: onRefreshPhotoPressed,
                 ),
               ],
             ),
@@ -1221,6 +1344,76 @@ class _RenameBucketButton extends StatelessWidget {
   }
 }
 
+class _RefreshPhotoButton extends StatelessWidget {
+  const _RefreshPhotoButton({
+    required this.isRefreshing,
+    required this.onPressed,
+  });
+
+  final bool isRefreshing;
+  final Future<void> Function() onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999.0),
+        onTap: isRefreshing
+            ? null
+            : () {
+                onPressed();
+              },
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+          decoration: BoxDecoration(
+            color: const Color(0x140B5CAD),
+            borderRadius: BorderRadius.circular(999.0),
+            border: Border.all(
+              color: AppBranding.actionColor.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isRefreshing)
+                const SizedBox(
+                  width: 14.0,
+                  height: 14.0,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0,
+                    color: AppBranding.actionColor,
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.photo_camera_back_rounded,
+                  size: 16.0,
+                  color: AppBranding.actionColor,
+                ),
+              const SizedBox(width: 6.0),
+              Text(
+                AppBranding.localized(
+                  context,
+                  zh: '刷新照片',
+                  en: 'Refresh Photo',
+                ),
+                style: theme.bodySmall.override(
+                  color: AppBranding.actionColor,
+                  letterSpacing: 0.0,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SummaryStatusPill extends StatelessWidget {
   const _SummaryStatusPill({
     required this.label,
@@ -1246,6 +1439,89 @@ class _SummaryStatusPill extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
       ),
+    );
+  }
+}
+
+class _RefreshingStatusPillGroup extends StatefulWidget {
+  const _RefreshingStatusPillGroup({
+    required this.isRefreshing,
+    required this.refreshingLabel,
+    required this.statusLabel,
+    required this.statusColor,
+  });
+
+  final bool isRefreshing;
+  final String refreshingLabel;
+  final String statusLabel;
+  final Color statusColor;
+
+  @override
+  State<_RefreshingStatusPillGroup> createState() =>
+      _RefreshingStatusPillGroupState();
+}
+
+class _RefreshingStatusPillGroupState
+    extends State<_RefreshingStatusPillGroup> {
+  static const Duration _refreshingLingerDuration = Duration(seconds: 3);
+
+  Timer? _hideTimer;
+  bool _showRefreshingPill = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _showRefreshingPill = widget.isRefreshing;
+  }
+
+  @override
+  void didUpdateWidget(covariant _RefreshingStatusPillGroup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isRefreshing) {
+      _hideTimer?.cancel();
+      if (!_showRefreshingPill) {
+        setState(() => _showRefreshingPill = true);
+      }
+      return;
+    }
+
+    if (oldWidget.isRefreshing && !widget.isRefreshing) {
+      _hideTimer?.cancel();
+      _hideTimer = Timer(_refreshingLingerDuration, () {
+        if (!mounted) {
+          return;
+        }
+        setState(() => _showRefreshingPill = false);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showRefreshingPill = widget.isRefreshing || _showRefreshingPill;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showRefreshingPill) ...[
+          _SummaryStatusPill(
+            label: widget.refreshingLabel,
+            color: AppBranding.warningColor,
+          ),
+          const SizedBox(width: 8.0),
+        ],
+        _SummaryStatusPill(
+          label: widget.statusLabel,
+          color: widget.statusColor,
+        ),
+      ],
     );
   }
 }

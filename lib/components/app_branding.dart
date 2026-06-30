@@ -1,5 +1,6 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class AppBranding {
@@ -62,7 +63,8 @@ class AppBranding {
       actions: extraActions ??
           [
             Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 12.0, 0.0),
+              padding:
+                  const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 12.0, 0.0),
               child: Align(
                 alignment: Alignment.center,
                 child: buildLogoBadge(context),
@@ -189,8 +191,16 @@ class AppBranding {
     BuildContext context, {
     required String title,
     String? subtitle,
+    String? hintMessage,
     IconData icon = Icons.info_outline_rounded,
   }) {
+    final titleStyle = FlutterFlowTheme.of(context).titleMedium.override(
+          color: textStrong,
+          letterSpacing: 0.0,
+          fontWeight: FontWeight.w700,
+        );
+    final hasHintMessage = hintMessage != null && hintMessage.trim().isNotEmpty;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16.0),
@@ -215,15 +225,13 @@ class AppBranding {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: FlutterFlowTheme.of(context).titleMedium.override(
-                        color: textStrong,
-                        letterSpacing: 0.0,
-                        fontWeight: FontWeight.w700,
-                      ),
+                buildTitleWithHint(
+                  context,
+                  title: title,
+                  hintMessage: hasHintMessage ? hintMessage : null,
+                  style: titleStyle,
                 ),
-                if (subtitle != null) ...[
+                if (!hasHintMessage && subtitle != null) ...[
                   const SizedBox(height: 4.0),
                   Text(
                     subtitle,
@@ -237,6 +245,175 @@ class AppBranding {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  static Widget buildTitleWithHint(
+    BuildContext context, {
+    required String title,
+    String? hintMessage,
+    TextStyle? style,
+  }) {
+    final effectiveStyle = style ??
+        FlutterFlowTheme.of(context).titleMedium.override(
+              color: textStrong,
+              letterSpacing: 0.0,
+              fontWeight: FontWeight.w700,
+            );
+
+    if (hintMessage == null || hintMessage.trim().isEmpty) {
+      return Text(title, style: effectiveStyle);
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: effectiveStyle,
+          ),
+        ),
+        const SizedBox(width: 8.0),
+        _HintMessageButton(message: hintMessage),
+      ],
+    );
+  }
+}
+
+class _HintMessageButton extends StatefulWidget {
+  const _HintMessageButton({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  State<_HintMessageButton> createState() => _HintMessageButtonState();
+}
+
+class _HintMessageButtonState extends State<_HintMessageButton> {
+  static _HintMessageButtonState? _activeState;
+
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  Timer? _dismissTimer;
+
+  @override
+  void dispose() {
+    _removeOverlay();
+    super.dispose();
+  }
+
+  void _showHint() {
+    _activeState?._removeOverlay();
+    _removeOverlay();
+
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) {
+      return;
+    }
+
+    final message = widget.message.trim();
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final maxBubbleWidth =
+        screenWidth > 64.0 ? screenWidth - 64.0 : screenWidth;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned.fill(
+        child: IgnorePointer(
+          ignoring: true,
+          child: Stack(
+            children: [
+              CompositedTransformFollower(
+                link: _layerLink,
+                showWhenUnlinked: false,
+                targetAnchor: Alignment.bottomRight,
+                followerAnchor: Alignment.topRight,
+                offset: const Offset(0.0, 10.0),
+                child: Material(
+                  color: Colors.transparent,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: maxBubbleWidth.clamp(0.0, 280.0).toDouble(),
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xF217324D),
+                        borderRadius: BorderRadius.circular(14.0),
+                        boxShadow: const [
+                          BoxShadow(
+                            blurRadius: 16.0,
+                            color: Color(0x22000000),
+                            offset: Offset(0.0, 8.0),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14.0,
+                          vertical: 10.0,
+                        ),
+                        child: Text(
+                          message,
+                          style:
+                              FlutterFlowTheme.of(context).bodyMedium.override(
+                                    color: Colors.white,
+                                    letterSpacing: 0.0,
+                                    lineHeight: 1.45,
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_overlayEntry!);
+    _activeState = this;
+    _dismissTimer = Timer(_displayDurationFor(message), _removeOverlay);
+  }
+
+  void _removeOverlay() {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (_activeState == this) {
+      _activeState = null;
+    }
+  }
+
+  Duration _displayDurationFor(String message) {
+    final characterCount =
+        message.replaceAll(RegExp(r'\s+'), '').characters.length;
+    final effectiveCount = characterCount <= 0 ? 1 : characterCount;
+    return Duration(milliseconds: effectiveCount * 200);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: IconButton(
+        onPressed: _showHint,
+        style: IconButton.styleFrom(
+          minimumSize: const Size(34.0, 34.0),
+          padding: EdgeInsets.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          backgroundColor: const Color(0x1A0B5CAD),
+          foregroundColor: AppBranding.actionColor,
+        ),
+        icon: const Icon(
+          Icons.search_rounded,
+          size: 18.0,
+        ),
       ),
     );
   }

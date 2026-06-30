@@ -735,7 +735,7 @@ class _SelectPageWidgetState extends State<SelectPageWidget> {
                 AppBranding.buildInfoBanner(
                   context,
                   title: valueOrDefault<String>(widget.farmName, '-'),
-                  subtitle: AppBranding.localized(
+                  hintMessage: AppBranding.localized(
                     context,
                     zh: '查看這個農場的歷史圖表、餵食紀錄與警示資料。',
                     en: 'Review charts, feed history, and alert records for this farm.',

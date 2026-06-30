@@ -529,7 +529,7 @@ class _SetPageWidgetState extends State<SetPageWidget> {
       title: (widget.farmName ?? '').trim().isEmpty
           ? '-'
           : widget.farmName!.trim(),
-      subtitle: _localized(
+      hintMessage: _localized(
         zh: '調整這個農場目前控制器的系統參數與警示設定。',
         en: 'Adjust controller settings and alert thresholds for this farm.',
       ),
