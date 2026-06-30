@@ -132,46 +132,50 @@ class _MapPageWidgetState extends State<MapPageWidget> {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBranding.buildPageAppBar(
-          context,
-          title: AppBranding.localized(
+      child: AppBranding.wrapWithEdgeSwipeBack(
+        context,
+        onBack: () => context.pop(),
+        child: Scaffold(
+          key: scaffoldKey,
+          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+          appBar: AppBranding.buildPageAppBar(
             context,
-            zh: '\u8fb2\u5834\u5730\u5716',
-            en: 'Farm Map',
+            title: AppBranding.localized(
+              context,
+              zh: '\u8fb2\u5834\u5730\u5716',
+              en: 'Farm Map',
+            ),
+            onBack: () => context.pop(),
           ),
-          onBack: () => context.pop(),
-        ),
-        body: SafeArea(
-          top: true,
-          child: AppBranding.buildPageBackground(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1180.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      AppBranding.buildInfoBanner(
-                        context,
-                        title: valueOrDefault<String>(widget.farmName, '-'),
-                        hintMessage: AppBranding.localized(
+          body: SafeArea(
+            top: true,
+            child: AppBranding.buildPageBackground(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1180.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppBranding.buildInfoBanner(
                           context,
-                          zh: '\u6703\u4f9d\u64da\u76ee\u524d\u8fb2\u5834\u8f09\u5165\u4f3a\u670d\u5668\u7248\u5730\u5716\uff0c\u53ef\u6aa2\u8996\u5b9a\u4f4d\u3001\u72c0\u614b\u8207\u8def\u7dda\u8cc7\u8a0a\u3002',
-                          en: 'Loads the server-hosted farm map for the selected farm, including location, status, and route details.',
+                          title: valueOrDefault<String>(widget.farmName, '-'),
+                          hintMessage: AppBranding.localized(
+                            context,
+                            zh: '\u6703\u4f9d\u64da\u76ee\u524d\u8fb2\u5834\u8f09\u5165\u4f3a\u670d\u5668\u7248\u5730\u5716\uff0c\u53ef\u6aa2\u8996\u5b9a\u4f4d\u3001\u72c0\u614b\u8207\u8def\u7dda\u8cc7\u8a0a\u3002',
+                            en: 'Loads the server-hosted farm map for the selected farm, including location, status, and route details.',
+                          ),
+                          icon: Icons.map_outlined,
                         ),
-                        icon: Icons.map_outlined,
-                      ),
-                      const SizedBox(height: 16.0),
-                      Expanded(
-                        child: farmMapUri == null
-                            ? _buildMissingFarmState(context)
-                            : _buildMapPanel(context, farmMapUri),
-                      ),
-                    ],
+                        const SizedBox(height: 16.0),
+                        Expanded(
+                          child: farmMapUri == null
+                              ? _buildMissingFarmState(context)
+                              : _buildMapPanel(context, farmMapUri),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

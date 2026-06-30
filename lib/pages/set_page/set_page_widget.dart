@@ -837,108 +837,113 @@ class _SetPageWidgetState extends State<SetPageWidget> {
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: theme.primaryBackground,
-        appBar: AppBranding.buildPageAppBar(
-          context,
-          title: _localized(
-            zh: '系統設定',
-            en: 'System Settings',
+      child: AppBranding.wrapWithEdgeSwipeBack(
+        context,
+        onBack: () => Navigator.of(context).maybePop(),
+        child: Scaffold(
+          key: scaffoldKey,
+          backgroundColor: theme.primaryBackground,
+          appBar: AppBranding.buildPageAppBar(
+            context,
+            title: _localized(
+              zh: '系統設定',
+              en: 'System Settings',
+            ),
+            onBack: () => Navigator.of(context).maybePop(),
           ),
-          onBack: () => Navigator.of(context).maybePop(),
-        ),
-        body: SafeArea(
-          top: true,
-          child: AppBranding.buildPageBackground(
-            child: Column(
-              children: [
-                if (_isLoading)
-                  const LinearProgressIndicator(
-                    minHeight: 3.0,
-                    color: AppBranding.actionColor,
-                    backgroundColor: Color(0x220B5CAD),
-                  ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1180.0),
-                        child: Form(
-                          key: _formKey,
-                          child: AbsorbPointer(
-                            absorbing: _isLoading || _isSaving,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildFarmSummaryCard(),
-                                const SizedBox(height: 16.0),
-                                if (hasControllers) ...[
-                                  _buildControllerSelectorCard(),
+          body: SafeArea(
+            top: true,
+            child: AppBranding.buildPageBackground(
+              child: Column(
+                children: [
+                  if (_isLoading)
+                    const LinearProgressIndicator(
+                      minHeight: 3.0,
+                      color: AppBranding.actionColor,
+                      backgroundColor: Color(0x220B5CAD),
+                    ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1180.0),
+                          child: Form(
+                            key: _formKey,
+                            child: AbsorbPointer(
+                              absorbing: _isLoading || _isSaving,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildFarmSummaryCard(),
                                   const SizedBox(height: 16.0),
-                                  _buildSettingsGrid(),
-                                ] else
-                                  _buildEmptyState(),
-                              ],
+                                  if (hasControllers) ...[
+                                    _buildControllerSelectorCard(),
+                                    const SizedBox(height: 16.0),
+                                    _buildSettingsGrid(),
+                                  ] else
+                                    _buildEmptyState(),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                if (hasControllers)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 360.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 54.0,
-                          child: FilledButton.icon(
-                            onPressed: _isSaving ? null : _saveSettings,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppBranding.successColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.0),
+                  if (hasControllers)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 360.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 54.0,
+                            child: FilledButton.icon(
+                              onPressed: _isSaving ? null : _saveSettings,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppBranding.successColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                                textStyle: theme.titleSmall.copyWith(
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                              textStyle: theme.titleSmall.copyWith(
-                                fontSize: 20.0,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            icon: _isSaving
-                                ? const SizedBox(
-                                    width: 20.0,
-                                    height: 20.0,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
+                              icon: _isSaving
+                                  ? const SizedBox(
+                                      width: 20.0,
+                                      height: 20.0,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                  )
-                                : const Icon(Icons.save_rounded),
-                            label: Text(
-                              _isSaving
-                                  ? _localized(
-                                      zh: '儲存中...',
-                                      en: 'Saving...',
                                     )
-                                  : _localized(
-                                      zh: '儲存設定',
-                                      en: 'Save Settings',
-                                    ),
+                                  : const Icon(Icons.save_rounded),
+                              label: Text(
+                                _isSaving
+                                    ? _localized(
+                                        zh: '儲存中...',
+                                        en: 'Saving...',
+                                      )
+                                    : _localized(
+                                        zh: '儲存設定',
+                                        en: 'Save Settings',
+                                      ),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

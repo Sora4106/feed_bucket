@@ -718,38 +718,42 @@ class _SelectPageWidgetState extends State<SelectPageWidget> {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBranding.buildPageAppBar(
-          context,
-          title: _pageTitle(context),
-          onBack: () => context.pop(),
-        ),
-        body: AppBranding.buildPageBackground(
-          child: SafeArea(
-            top: true,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 20.0),
-              children: [
-                AppBranding.buildInfoBanner(
-                  context,
-                  title: valueOrDefault<String>(widget.farmName, '-'),
-                  hintMessage: AppBranding.localized(
+      child: AppBranding.wrapWithEdgeSwipeBack(
+        context,
+        onBack: () => context.pop(),
+        child: Scaffold(
+          key: scaffoldKey,
+          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+          appBar: AppBranding.buildPageAppBar(
+            context,
+            title: _pageTitle(context),
+            onBack: () => context.pop(),
+          ),
+          body: AppBranding.buildPageBackground(
+            child: SafeArea(
+              top: true,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 20.0),
+                children: [
+                  AppBranding.buildInfoBanner(
                     context,
-                    zh: '查看這個農場的歷史圖表、餵食紀錄與警示資料。',
-                    en: 'Review charts, feed history, and alert records for this farm.',
+                    title: valueOrDefault<String>(widget.farmName, '-'),
+                    hintMessage: AppBranding.localized(
+                      context,
+                      zh: '查看這個農場的歷史圖表、餵食紀錄與警示資料。',
+                      en: 'Review charts, feed history, and alert records for this farm.',
+                    ),
+                    icon: Icons.manage_search_rounded,
                   ),
-                  icon: Icons.manage_search_rounded,
-                ),
-                const SizedBox(height: 16.0),
-                _buildFilterPanel(context),
-                const SizedBox(height: 16.0),
-                if (_selectedView == 'feed')
-                  _buildFeedResults(context)
-                else
-                  _buildAlertResults(context),
-              ],
+                  const SizedBox(height: 16.0),
+                  _buildFilterPanel(context),
+                  const SizedBox(height: 16.0),
+                  if (_selectedView == 'feed')
+                    _buildFeedResults(context)
+                  else
+                    _buildAlertResults(context),
+                ],
+              ),
             ),
           ),
         ),

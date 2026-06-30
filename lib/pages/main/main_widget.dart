@@ -451,47 +451,52 @@ class _MainWidgetState extends State<MainWidget> {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBranding.buildPageAppBar(
-          context,
-          title: _pageTitle(context),
-          onBack: () => context.safePop(),
-        ),
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            _buildBackgroundLayer(),
-            SafeArea(
-              top: true,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 24.0),
-                    sliver: SliverToBoxAdapter(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1100.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildFarmSelectorCard(context),
-                              const SizedBox(height: 18.0),
-                              _buildActionPanel(context),
-                            ],
+      child: AppBranding.wrapWithEdgeSwipeBack(
+        context,
+        onBack: () => context.safePop(),
+        child: Scaffold(
+          key: scaffoldKey,
+          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+          appBar: AppBranding.buildPageAppBar(
+            context,
+            title: _pageTitle(context),
+            onBack: () => context.safePop(),
+          ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildBackgroundLayer(),
+              SafeArea(
+                top: true,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: [
+                    SliverPadding(
+                      padding:
+                          const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 24.0),
+                      sliver: SliverToBoxAdapter(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1100.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildFarmSelectorCard(context),
+                                const SizedBox(height: 18.0),
+                                _buildActionPanel(context),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

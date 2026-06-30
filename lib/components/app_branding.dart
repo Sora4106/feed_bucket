@@ -1,7 +1,9 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 class AppBranding {
   const AppBranding._();
@@ -151,6 +153,35 @@ class AppBranding {
           child,
         ],
       ),
+    );
+  }
+
+  static Widget wrapWithEdgeSwipeBack(
+    BuildContext context, {
+    required Widget child,
+    VoidCallback? onBack,
+  }) {
+    final shouldEnable =
+        onBack != null && Theme.of(context).platform == TargetPlatform.iOS;
+
+    if (!shouldEnable) {
+      return child;
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        child,
+        Positioned(
+          left: 0.0,
+          top: 0.0,
+          bottom: 0.0,
+          width: 18.0,
+          child: PointerInterceptor(
+            child: _EdgeSwipeBackRegion(onBack: onBack),
+          ),
+        ),
+      ],
     );
   }
 
@@ -415,6 +446,66 @@ class _HintMessageButtonState extends State<_HintMessageButton> {
           size: 18.0,
         ),
       ),
+    );
+  }
+}
+
+class _EdgeSwipeBackRegion extends StatefulWidget {
+  const _EdgeSwipeBackRegion({
+    required this.onBack,
+  });
+
+  final VoidCallback onBack;
+
+  @override
+  State<_EdgeSwipeBackRegion> createState() => _EdgeSwipeBackRegionState();
+}
+
+class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
+  static const double _triggerDistance = 56.0;
+  static const double _triggerVelocity = 500.0;
+
+  double _dragDistance = 0.0;
+  bool _didTrigger = false;
+
+  void _handleDragStart(DragStartDetails details) {
+    _dragDistance = 0.0;
+    _didTrigger = false;
+  }
+
+  void _handleDragUpdate(DragUpdateDetails details) {
+    if (_didTrigger) {
+      return;
+    }
+
+    _dragDistance += details.primaryDelta ?? 0.0;
+    if (_dragDistance >= _triggerDistance) {
+      _didTrigger = true;
+      widget.onBack();
+    }
+  }
+
+  void _handleDragEnd(DragEndDetails details) {
+    if (_didTrigger) {
+      return;
+    }
+
+    final velocity = details.primaryVelocity ?? 0.0;
+    if (_dragDistance >= _triggerDistance || velocity >= _triggerVelocity) {
+      _didTrigger = true;
+      widget.onBack();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      dragStartBehavior: DragStartBehavior.down,
+      onHorizontalDragStart: _handleDragStart,
+      onHorizontalDragUpdate: _handleDragUpdate,
+      onHorizontalDragEnd: _handleDragEnd,
+      child: const SizedBox.expand(),
     );
   }
 }

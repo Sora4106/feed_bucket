@@ -516,43 +516,48 @@ class _ControllerPageWidgetState extends State<ControllerPageWidget> {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
-      child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBranding.buildPageAppBar(
-          context,
-          title: AppBranding.localized(
+      child: AppBranding.wrapWithEdgeSwipeBack(
+        context,
+        onBack: () => context.pop(),
+        child: Scaffold(
+          key: scaffoldKey,
+          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+          appBar: AppBranding.buildPageAppBar(
             context,
-            zh: '裝置控制',
-            en: 'Device Control',
+            title: AppBranding.localized(
+              context,
+              zh: '裝置控制',
+              en: 'Device Control',
+            ),
+            onBack: () => context.pop(),
           ),
-          onBack: () => context.pop(),
-        ),
-        body: SafeArea(
-          top: true,
-          child: AppBranding.buildPageBackground(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
-                  child: AppBranding.buildInfoBanner(
-                    context,
-                    title: valueOrDefault<String>(widget.farmName, '-'),
-                    hintMessage: AppBranding.localized(
+          body: SafeArea(
+            top: true,
+            child: AppBranding.buildPageBackground(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
+                    child: AppBranding.buildInfoBanner(
                       context,
-                      zh: '在同一個畫面查看每一桶的最新照片與感測器數據。',
-                      en: 'Review the latest photo and sensor details for each bucket in one place.',
+                      title: valueOrDefault<String>(widget.farmName, '-'),
+                      hintMessage: AppBranding.localized(
+                        context,
+                        zh: '在同一個畫面查看每一桶的最新照片與感測器數據。',
+                        en: 'Review the latest photo and sensor details for each bucket in one place.',
+                      ),
+                      icon: Icons.precision_manufacturing_rounded,
                     ),
-                    icon: Icons.precision_manufacturing_rounded,
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 18.0),
-                    child: _buildBucketOverviewSection(context),
+                  Expanded(
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 18.0),
+                      child: _buildBucketOverviewSection(context),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -992,6 +997,7 @@ class _ControllerPhotoPreview extends StatelessWidget {
           allowRotation: true,
           tag: heroTag,
           useHeroAnimation: true,
+          preferLandscapePresentationOnIOSWeb: true,
           preferredOrientationsOnOpen: const [
             DeviceOrientation.landscapeLeft,
             DeviceOrientation.landscapeRight,
