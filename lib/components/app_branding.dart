@@ -469,15 +469,30 @@ class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
   static const double _triggerDistance = 56.0;
   static const double _triggerVelocity = 500.0;
   static const Duration _triggerCooldown = Duration(milliseconds: 700);
+  static const Duration _iOSWebSystemBackGracePeriod =
+      Duration(milliseconds: 180);
 
   static DateTime? _lastTriggeredAt;
 
   double _dragDistance = 0.0;
   bool _didTrigger = false;
+  String _routeAtDragStart = '';
+  Timer? _pendingTriggerTimer;
+
+  bool get _usesIOSWebGestureGracePeriod =>
+      isWeb && Theme.of(context).platform == TargetPlatform.iOS;
+
+  @override
+  void dispose() {
+    _pendingTriggerTimer?.cancel();
+    super.dispose();
+  }
 
   void _handleDragStart(DragStartDetails details) {
+    _pendingTriggerTimer?.cancel();
     _dragDistance = 0.0;
     _didTrigger = false;
+    _routeAtDragStart = getCurrentRoute(context);
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
@@ -496,8 +511,44 @@ class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
 
     final velocity = details.primaryVelocity ?? 0.0;
     if (_dragDistance >= _triggerDistance || velocity >= _triggerVelocity) {
+      if (_routeChangedSinceDragStart()) {
+        return;
+      }
+
+      if (_usesIOSWebGestureGracePeriod) {
+        // iOS PWA can deliver its native history-back gesture just before
+        // Flutter receives drag end. Wait briefly so we only run one back.
+        _pendingTriggerTimer?.cancel();
+        _pendingTriggerTimer = Timer(
+          _iOSWebSystemBackGracePeriod,
+          () {
+            if (!mounted || _didTrigger || _routeChangedSinceDragStart()) {
+              return;
+            }
+            _triggerBack();
+          },
+        );
+        return;
+      }
+
       _triggerBack();
     }
+  }
+
+  void _handleDragCancel() {
+    _pendingTriggerTimer?.cancel();
+    _dragDistance = 0.0;
+    _didTrigger = false;
+  }
+
+  bool _routeChangedSinceDragStart() {
+    final routeAtDragStart = _routeAtDragStart;
+    if (routeAtDragStart.isEmpty) {
+      return false;
+    }
+
+    final currentRoute = getCurrentRoute(context);
+    return currentRoute.isNotEmpty && currentRoute != routeAtDragStart;
   }
 
   void _triggerBack() {
@@ -507,6 +558,8 @@ class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
       return;
     }
 
+    _pendingTriggerTimer?.cancel();
+    _pendingTriggerTimer = null;
     _lastTriggeredAt = now;
     _didTrigger = true;
     widget.onBack();
@@ -520,6 +573,7 @@ class _EdgeSwipeBackRegionState extends State<_EdgeSwipeBackRegion> {
       onHorizontalDragStart: _handleDragStart,
       onHorizontalDragUpdate: _handleDragUpdate,
       onHorizontalDragEnd: _handleDragEnd,
+      onHorizontalDragCancel: _handleDragCancel,
       child: const SizedBox.expand(),
     );
   }
