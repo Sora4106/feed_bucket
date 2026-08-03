@@ -9293,7 +9293,7 @@ q=A.blI(A.aU9(A.e0(q,0,null).ge8()))
 $.abC=!0
 $.abj=new A.aqK(q,B.pO)
 s=2
-return A.P($.aVw().Dq(".env"),$async$B4)
+return A.P($.aVw().Dq("runtime_config.txt"),$async$B4)
 case 2:s=3
 return A.P(A.ail(),$async$B4)
 case 3:s=4
@@ -51832,7 +51832,7 @@ p=p.a.aj("_")==="zh_Hant"?"\u9032\u5165\u7cfb\u7d71":"Open Dashboard"
 j=t.p
 r=A.aS(h,A.ch(A.c([q,B.IZ,o,B.dH,n,B.a8Y,A.cX(A.aRx(k,A.aa(p,h,h,h,A.a0(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).glc(),16,B.h),B.q,h,h,h,B.Q,0,h),h,h),m,l),h,260)],j),B.u,B.A,B.t),B.p,h,h,r,h,h,B.ra,1/0)
 $.bw()
-return A.hf(h,A.q3(h,s,A.j8(!0,A.By(A.fH(A.awb(new A.dT(B.L8,A.ch(A.c([r,B.ek,A.aa("v1.0.4",h,h,h,A.a0(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.aj,h,h,h,h,0,h),h,h)],j),B.u,B.as,B.t),h),B.eH),h,h)),!0),i.e),B.ac,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aEO(a),h,h,h,h,h,h)}}
+return A.hf(h,A.q3(h,s,A.j8(!0,A.By(A.fH(A.awb(new A.dT(B.L8,A.ch(A.c([r,B.ek,A.aa("v1.0.6+8",h,h,h,A.a0(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.aj,h,h,h,h,0,h),h,h)],j),B.u,B.as,B.t),h),B.eH),h,h)),!0),i.e),B.ac,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aEO(a),h,h,h,h,h,h)}}
 A.aEQ.prototype={
 $0(){return A.bad()},
 $S:515}

@@ -45,6 +45,16 @@ jobs:
             exit 1
           fi
 
+          if [[ ! -s site/assets/runtime_config.txt ]]; then
+            echo "Missing public runtime configuration: site/assets/runtime_config.txt" >&2
+            exit 1
+          fi
+
+          if [[ -e site/assets/.env ]]; then
+            echo "Deprecated hidden runtime configuration must not be published." >&2
+            exit 1
+          fi
+
           echo "value=$release_version" >> "$GITHUB_OUTPUT"
 
       - name: Stamp PWA cache version

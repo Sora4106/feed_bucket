@@ -37,4 +37,7 @@ It writes `site/release.json` and `site/version.json` from the canonical
 the exact same value for the PWA cache, so it will fail rather than publish a
 mismatched version.
 
+`site/assets/runtime_config.txt` is required by the deployed PWA. It contains
+only the public service base URL; never add passwords, tokens, or keys to it.
+
 Do not copy `lib/`, `android/`, `ios/`, `assets/` from the Flutter project root, APK/AAB/IPA files, or any other source/release materials into this repository.
