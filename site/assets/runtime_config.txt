@@ -1,3 +1,3 @@
-# Public runtime configuration for the deployed Feed Bucket PWA.
+# Public runtime configuration for the Android, iOS, and Web PWA builds.
 # Do not put passwords, API keys, or other credentials in this file.
 FEED_BUCKET_SERVICE_BASE_URL=https://bdw.npust.edu.tw/F_S
