@@ -1,3 +1,4 @@
 # Public runtime configuration for the Android, iOS, and Web PWA builds.
 # Do not put passwords, API keys, or other credentials in this file.
 FEED_BUCKET_SERVICE_BASE_URL=https://bdw.npust.edu.tw/F_S
+FEED_BUCKET_DATABASE_API_PATH=FlutterFlow_link_key_v2.php
