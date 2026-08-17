@@ -47,6 +47,23 @@ async function storeResponse(request, response) {
   return response;
 }
 
+async function appShellResponse() {
+  const cache = await caches.open(CACHE_NAME);
+  const appShellUrl = new URL('index.html', self.registration.scope).href;
+  const cachedResponse =
+    (await cache.match(appShellUrl)) ||
+    (await cache.match('index.html')) ||
+    (await cache.match('./index.html'));
+
+  // respondWith() must always resolve to a Response. This fallback is used
+  // only before the application shell has finished being cached.
+  return cachedResponse ||
+    new Response('Application shell is not available yet.', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+}
+
 async function networkFirst(request, fallbackKey) {
   try {
     const networkResponse = await fetch(request);
@@ -81,7 +98,9 @@ async function staleWhileRevalidate(event) {
     return networkResponse;
   }
 
-  return caches.match(event.request);
+  // Never return undefined: Chrome rejects it as an invalid fetch response.
+  return (await caches.match(event.request)) ||
+    new Response('', { status: 504, statusText: 'Network request failed' });
 }
 
 self.addEventListener('install', (event) => {
@@ -121,7 +140,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (event.request.mode === 'navigate') {
-    event.respondWith(networkFirst(event.request, 'index.html'));
+    // Flutter routes such as /login do not exist as physical GitHub Pages
+    // files. Serve the cached SPA shell instead of fetching those URLs.
+    event.respondWith(appShellResponse());
     return;
   }
 
