@@ -127,13 +127,32 @@
   </script>
   <script>
     (() => {
+      const appEntryUrl = new URL('./', document.baseURI).href;
+      const entryPathname = new URL(appEntryUrl).pathname;
+      const navigationEntry = performance.getEntriesByType('navigation')[0];
+      const isBrowserReload = navigationEntry?.type === 'reload';
+      const isDesktopBrowser =
+        window.matchMedia?.('(pointer: fine)').matches === true &&
+        !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+      // Keep desktop browser refreshes predictable. A refresh on any nested
+      // Flutter route returns to the public entry page instead of reloading
+      // that route directly from GitHub Pages.
+      if (
+        isDesktopBrowser &&
+        isBrowserReload &&
+        window.location.pathname !== entryPathname
+      ) {
+        window.location.replace(appEntryUrl);
+        return;
+      }
+
       if (!('serviceWorker' in navigator)) {
         return;
       }
 
       const appVersion = '__APP_VERSION__';
       const serviceWorkerUrl = `pwa_service_worker.js?v=${appVersion}`;
-      const appEntryUrl = new URL('./', document.baseURI).href;
       let isReloadingForUpdate = false;
       let shouldReturnToEntryPage = false;
 
