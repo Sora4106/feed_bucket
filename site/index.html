@@ -152,9 +152,24 @@
       }
 
       const appVersion = '__APP_VERSION__';
-      const serviceWorkerUrl = `pwa_service_worker.js?v=${appVersion}`;
+      const preferredServiceWorkerUrl = new URL(
+        'pwa_service_worker.js',
+        document.baseURI,
+      ).href;
       let isReloadingForUpdate = false;
       let shouldReturnToEntryPage = false;
+
+      const isFeedBucketServiceWorker = (workerUrl) => {
+        if (!workerUrl) {
+          return false;
+        }
+
+        try {
+          return new URL(workerUrl).pathname.endsWith('/pwa_service_worker.js');
+        } catch (_) {
+          return false;
+        }
+      };
 
       const removeUpdateBanner = () => {
         document.getElementById('feed-bucket-update-banner')?.remove();
@@ -299,6 +314,19 @@
 
       window.addEventListener('load', async () => {
         try {
+          const existingRegistration = await navigator.serviceWorker.getRegistration(
+            appEntryUrl,
+          );
+          const existingWorkerUrl =
+            existingRegistration?.active?.scriptURL ??
+            existingRegistration?.waiting?.scriptURL ??
+            existingRegistration?.installing?.scriptURL;
+          // Existing users previously registered the worker with a version
+          // query string. Keep that URL for them so the migration itself does
+          // not appear as a second update; fresh installs use the fixed URL.
+          const serviceWorkerUrl = isFeedBucketServiceWorker(existingWorkerUrl)
+            ? existingWorkerUrl
+            : preferredServiceWorkerUrl;
           const registration = await navigator.serviceWorker.register(
             serviceWorkerUrl,
             {
