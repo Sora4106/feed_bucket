@@ -164,6 +164,19 @@
         worker?.postMessage({ type: 'SKIP_WAITING' });
       };
 
+      const checkForWaitingWorker = (registration) => {
+        if (!registration?.waiting) {
+          return;
+        }
+
+        if (!navigator.serviceWorker.controller) {
+          requestActivation(registration.waiting);
+          return;
+        }
+
+        showUpdateBanner(registration);
+      };
+
       const showUpdateBanner = (registration) => {
         if (!registration?.waiting) {
           return;
@@ -251,11 +264,7 @@
           return;
         }
 
-        if (!navigator.serviceWorker.controller && registration.waiting) {
-          requestActivation(registration.waiting);
-        } else if (registration.waiting) {
-          showUpdateBanner(registration);
-        }
+        checkForWaitingWorker(registration);
 
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
@@ -268,12 +277,10 @@
               return;
             }
 
-            if (!navigator.serviceWorker.controller) {
-              requestActivation(registration.waiting ?? newWorker);
-              return;
-            }
-
-            showUpdateBanner(registration);
+            // The browser can expose `registration.waiting` one task after
+            // the worker enters the installed state. Check on the next task so
+            // the update banner is never skipped because of that timing gap.
+            window.setTimeout(() => checkForWaitingWorker(registration), 50);
           });
         });
       };
@@ -294,9 +301,13 @@
         try {
           const registration = await navigator.serviceWorker.register(
             serviceWorkerUrl,
+            {
+              updateViaCache: 'none',
+            },
           );
 
           monitorRegistration(registration);
+          registration.update();
           setInterval(() => registration.update(), 60000);
 
           document.addEventListener('visibilitychange', () => {
