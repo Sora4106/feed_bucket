@@ -52105,7 +52105,7 @@ p=p.a.ac("_")==="zh_Hant"?"\u9032\u5165\u7cfb\u7d71":"Open Dashboard"
 j=t.p
 r=A.aP(h,A.ce(A.c([q,B.J9,o,B.dJ,n,B.a96,A.cS(A.aRJ(k,A.a6(p,h,h,h,A.a_(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).glf(),16,B.h),B.q,h,h,h,B.O,0,h),h,h),m,l),h,260)],j),B.u,B.A,B.t),B.o,h,h,r,h,h,B.rk,1/0)
 $.bL()
-return A.fO(h,A.q6(h,s,A.j9(!0,A.By(A.fJ(A.awb(new A.dU(B.Lg,A.ce(A.c([r,B.eo,A.a6("v1.0.16+20",h,h,h,A.a_(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.aa,h,h,h,h,0,h),h,h)],j),B.u,B.au,B.t),h),B.eP),h,h)),!0),i.e),B.ab,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aEV(a),h,h,h,h,h,h)}}
+return A.fO(h,A.q6(h,s,A.j9(!0,A.By(A.fJ(A.awb(new A.dU(B.Lg,A.ce(A.c([r,B.eo,A.a6("v1.0.17+21",h,h,h,A.a_(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.aa,h,h,h,h,0,h),h,h)],j),B.u,B.au,B.t),h),B.eP),h,h)),!0),i.e),B.ab,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aEV(a),h,h,h,h,h,h)}}
 A.aEX.prototype={
 $0(){return A.baq()},
 $S:401}
