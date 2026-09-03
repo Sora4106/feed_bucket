@@ -154,3 +154,54 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(staleWhileRevalidate(event));
 });
+
+self.addEventListener('push', (event) => {
+  event.waitUntil((async () => {
+    let payload = {};
+    try {
+      payload = event.data?.json() || {};
+    } catch (_) {
+      payload = {
+        title: '飼料桶監控通知',
+        body: event.data?.text?.() || '',
+      };
+    }
+
+    const baseUrl = new URL('./', self.registration.scope);
+    await self.registration.showNotification(
+      payload.title || '飼料桶監控通知',
+      {
+        body: payload.body || '',
+        tag: payload.tag || 'hub8735-notification',
+        icon: new URL('icons/hao-icon-192.png', baseUrl).toString(),
+        badge: new URL('icons/hao-icon-192.png', baseUrl).toString(),
+        data: {
+          url: payload.url || baseUrl.toString(),
+          eventId: payload.eventId || null,
+          alertType: payload.alertType || 'general',
+          monitorId: payload.monitorId || null,
+        },
+      },
+    );
+  })());
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const targetUrl = event.notification.data?.url ||
+      new URL('./', self.registration.scope).toString();
+    const windows = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
+    for (const client of windows) {
+      if ('focus' in client) {
+        await client.focus();
+        if ('navigate' in client) await client.navigate(targetUrl);
+        return;
+      }
+    }
+    await self.clients.openWindow(targetUrl);
+  })());
+});

@@ -1,4 +1,9 @@
 # Public runtime configuration for the Android, iOS, and Web PWA builds.
-# Do not put passwords, API keys, or other credentials in this file.
+# Do not put passwords, service-role keys, VAPID private keys, or other private
+# credentials here. Supabase publishable/anon and VAPID public keys are public.
 FEED_BUCKET_SERVICE_BASE_URL=https://bdw.npust.edu.tw/F_S
 FEED_BUCKET_DATABASE_API_PATH=FlutterFlow_link_key_v2.php
+HUB8735_SUPABASE_URL=https://fzbejyapxowikfgdaxxm.supabase.co
+HUB8735_SUPABASE_ANON_KEY=sb_publishable_Lh3gOoESy04PIi5tibKmhw_KrmN6u_L
+HUB8735_WEB_PUSH_VAPID_PUBLIC_KEY=BHu_UPSbVvaYoD6X5N2BhZFqOgRKxa6bu8hwT9SlDqd8N04erVr3krOeHyHDLZZ72M4nWrZPrGcl_FEghP3Q4Io
+HUB8735_SUBSCRIPTION_FUNCTION=hub8735-subscribe

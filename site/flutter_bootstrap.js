@@ -36,6 +36,146 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"77e2e94772b6eb43759e34ed1ad7da4674e19cab","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}]};
 
 
+function feedBucketPushTimezone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Taipei';
+  } catch (_) {
+    return 'Asia/Taipei';
+  }
+}
+
+function feedBucketVapidKey(value) {
+  const normalized = `${value || ''}`.trim();
+  const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+  const base64 = (normalized + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const decoded = window.atob(base64);
+  return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+}
+
+function feedBucketSerializePushSubscription(subscription) {
+  if (!subscription) return null;
+  const json = typeof subscription.toJSON === 'function'
+    ? subscription.toJSON()
+    : {};
+  const keys = json.keys || {};
+  return {
+    endpoint: subscription.endpoint || '',
+    expirationTime: subscription.expirationTime == null
+      ? null
+      : Number(subscription.expirationTime),
+    p256dh: keys.p256dh || '',
+    auth: keys.auth || '',
+  };
+}
+
+function feedBucketPushStatus(supported, permission, subscription, reason) {
+  return {
+    supported,
+    permission,
+    subscription: subscription || null,
+    timezoneName: feedBucketPushTimezone(),
+    reason: reason || null,
+  };
+}
+
+function feedBucketPushSupported() {
+  return 'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window;
+}
+
+async function feedBucketPushRegistration() {
+  return navigator.serviceWorker.ready;
+}
+
+async function feedBucketPushGetStatus() {
+  if (!feedBucketPushSupported()) {
+    return feedBucketPushStatus(false, 'unsupported', null, 'push_not_supported');
+  }
+  try {
+    const registration = await feedBucketPushRegistration();
+    const subscription = await registration.pushManager.getSubscription();
+    return feedBucketPushStatus(
+      true,
+      Notification.permission || 'default',
+      feedBucketSerializePushSubscription(subscription),
+      null,
+    );
+  } catch (error) {
+    return feedBucketPushStatus(
+      true,
+      Notification.permission || 'default',
+      null,
+      error?.message || `${error}`,
+    );
+  }
+}
+
+async function feedBucketPushSubscribe(vapidPublicKey) {
+  if (!feedBucketPushSupported()) {
+    return feedBucketPushStatus(false, 'unsupported', null, 'push_not_supported');
+  }
+  const publicKey = `${vapidPublicKey || ''}`.trim();
+  if (!publicKey) {
+    return feedBucketPushStatus(
+      true,
+      Notification.permission || 'default',
+      null,
+      'push_public_key_missing',
+    );
+  }
+
+  let permission = Notification.permission || 'default';
+  if (permission !== 'granted') {
+    permission = await Notification.requestPermission();
+  }
+  if (permission !== 'granted') {
+    return feedBucketPushStatus(true, permission, null, 'push_permission_not_granted');
+  }
+
+  const registration = await feedBucketPushRegistration();
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: feedBucketVapidKey(publicKey),
+    });
+  }
+  return feedBucketPushStatus(
+    true,
+    permission,
+    feedBucketSerializePushSubscription(subscription),
+    null,
+  );
+}
+
+async function feedBucketPushUnsubscribe() {
+  if (!feedBucketPushSupported()) {
+    return feedBucketPushStatus(false, 'unsupported', null, 'push_not_supported');
+  }
+  const registration = await feedBucketPushRegistration();
+  const subscription = await registration.pushManager.getSubscription();
+  if (subscription) await subscription.unsubscribe();
+  return feedBucketPushStatus(true, Notification.permission || 'default', null, null);
+}
+
+function feedBucketPushBridge(action, vapidPublicKey, callbackName) {
+  const callback = window[callbackName];
+  if (typeof callback !== 'function') return;
+  const run = action === 'subscribe'
+    ? () => feedBucketPushSubscribe(vapidPublicKey)
+    : action === 'unsubscribe'
+      ? () => feedBucketPushUnsubscribe()
+      : () => feedBucketPushGetStatus();
+  void run()
+    .then((payload) => callback(JSON.stringify(payload)))
+    .catch((error) => callback(JSON.stringify(
+      feedBucketPushStatus(false, 'unsupported', null, error?.message || `${error}`),
+    )));
+}
+
+window.feedBucketPushBridge = feedBucketPushBridge;
+
 _flutter.loader.load(
     {
         onEntrypointLoaded: async function(engineInitializer) {
