@@ -54857,7 +54857,7 @@ p=p.a.M("_")==="zh_Hant"?"\u9032\u5165\u7cfb\u7d71":"Open Dashboard"
 j=t.p
 r=A.aW(h,A.cn(A.c([q,B.l3,o,B.cN,n,B.aaZ,A.dO(A.aYe(k,A.a0(p,h,h,h,h,A.a_(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).gjQ(),16,B.i),B.q,h,h,h,B.a1,0,h),h,h),m,l),h,260)],j),B.u,B.x,B.r),B.n,h,h,r,h,h,h,B.rU,1/0)
 $.bC()
-return A.fu(h,A.r7(h,s,A.jO(!0,A.D6(A.h5(A.IQ(new A.dT(B.Ma,A.cn(A.c([r,B.eG,A.a0("v1.0.26+30",h,h,h,h,A.a_(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.S,h,h,h,h,0,h),h,h)],j),B.u,B.ay,B.r),h),B.hq),h,h)),!0),i.e),B.ae,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aJy(a),h,h,h,h,h,h)}}
+return A.fu(h,A.r7(h,s,A.jO(!0,A.D6(A.h5(A.IQ(new A.dT(B.Ma,A.cn(A.c([r,B.eG,A.a0("v1.0.27+31",h,h,h,h,A.a_(A.f().$3$color$fontSize$fontWeight((A.b(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.S,h,h,h,h,0,h),h,h)],j),B.u,B.ay,B.r),h),B.hq),h,h)),!0),i.e),B.ae,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aJy(a),h,h,h,h,h,h)}}
 A.aJA.prototype={
 $0(){return A.bhC()},
 $S:522}
@@ -57147,7 +57147,7 @@ g=m.gTM()
 f=m.gl8()
 $.bC()
 s=11
-return A.O(A.GN("1.0.26+30",i,g,f),$async$tM)
+return A.O(A.GN("1.0.27+31",i,g,f),$async$tM)
 case 11:h=b
 case 8:k=h
 if(m.c==null){n=[1]
