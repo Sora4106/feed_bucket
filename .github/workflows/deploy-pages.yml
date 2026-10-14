@@ -60,9 +60,14 @@ jobs:
       - name: Stamp PWA cache version
         shell: bash
         run: |
-          app_version="${{ steps.release.outputs.value }}"
-          sed -i "s/__APP_VERSION__/${app_version}/g" site/index.html
-          sed -i "s/__APP_VERSION__/${app_version}/g" site/pwa_service_worker.js
+          # The public version is retained in version.json/release.json.
+          # The cache key must additionally change for every deployed
+          # artifact; otherwise a rebuilt app with the same public version
+          # can reuse an older application shell and repeatedly request an
+          # update.
+          cache_version="${{ steps.release.outputs.value }}-${GITHUB_SHA::7}"
+          sed -i "s/__APP_VERSION__/${cache_version}/g" site/index.html
+          sed -i "s/__APP_VERSION__/${cache_version}/g" site/pwa_service_worker.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -50,15 +50,36 @@ async function storeResponse(request, response) {
 async function appShellResponse() {
   const cache = await caches.open(CACHE_NAME);
   const appShellUrl = new URL('index.html', self.registration.scope).href;
+
+  // A navigation can occur just after a new worker activates, before its
+  // initial app-shell cache is available. Always try the physical SPA entry
+  // point first; GitHub Pages cannot serve Flutter routes such as /login
+  // directly, but it can serve index.html.
+  try {
+    const networkResponse = await fetch(new Request(appShellUrl, {
+      cache: 'no-store',
+    }));
+    if (networkResponse && networkResponse.ok) {
+      await cache.put(appShellUrl, networkResponse.clone());
+      return networkResponse;
+    }
+  } catch (_) {
+    // Offline or temporarily unavailable: fall through to every existing
+    // cache, including the preceding release's cache.
+  }
+
   const cachedResponse =
     (await cache.match(appShellUrl)) ||
+    (await caches.match(appShellUrl)) ||
     (await cache.match('index.html')) ||
-    (await cache.match('./index.html'));
+    (await cache.match('./index.html')) ||
+    (await caches.match('index.html')) ||
+    (await caches.match('./index.html'));
 
-  // respondWith() must always resolve to a Response. This fallback is used
-  // only before the application shell has finished being cached.
+  // respondWith() must always resolve to a Response. This response is now
+  // reachable only while offline and before any application shell exists.
   return cachedResponse ||
-    new Response('Application shell is not available yet.', {
+    new Response('Application shell is unavailable while offline.', {
       status: 503,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
