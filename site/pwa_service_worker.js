@@ -52,7 +52,7 @@ async function appShellResponse() {
   const appShellUrl = new URL('index.html', self.registration.scope).href;
 
   // A navigation can occur just after a new worker activates, before its
-  // initial app-shell cache is available. Always try the physical SPA entry
+  // initial app-shell cache is available.  Always try the physical SPA entry
   // point first; GitHub Pages cannot serve Flutter routes such as /login
   // directly, but it can serve index.html.
   try {
