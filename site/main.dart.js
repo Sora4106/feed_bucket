@@ -59859,12 +59859,12 @@ e.toString
 e=e.a.E(a5)==="zh_Hant"?"\u5373\u6642\u843d\u6599\u76e3\u6e2c":"Live feed monitoring"
 d=A.o(b3,B.f,n)
 d.toString
-d=d.a.E(a5)==="zh_Hant"?"\u4eca\u65e5\u622a\u81f3\u76ee\u524d\u990a\u98df\u91cf":"Feed used today"
+d=d.a.E(a5)==="zh_Hant"?"\u4eca\u65e5\u9935\u98df\u7e3d\u91cf":"Today's total feed"
 c=r==="-"?"":a6
 b=a2.Yn(r)
 a=A.o(b3,B.f,n)
 a.toString
-a=a.a.E(a5)==="zh_Hant"?"\u524d\u4e00\u4f5c\u696d\u65e5\u990a\u98df\u91cf":"Previous-day feed used"
+a=a.a.E(a5)==="zh_Hant"?"\u6628\u65e5\u9935\u98df\u7e3d\u91cf":"Yesterday's total feed"
 a0=q==="-"?"":a6
 a1=t.p
 a0=A.my(B.c4,A.b([new A.o4(m,"\xb0C",a7,l,a4),new A.o4(k,"%",a8,j,a4),new A.o4(i,"cm",h,B.af,a4),new A.o4(g,a6,f,B.af,a4),new A.o4(e,a6,b2,b1,a4),new A.o4(d,c,r,b,a4),new A.o4(a,a0,q,a2.Yn(q),a4)],a1),B.cR,10,10)
@@ -60178,7 +60178,7 @@ p=p.a.E("_")==="zh_Hant"?"\u9032\u5165\u7cfb\u7d71":"Open Dashboard"
 j=t.p
 r=A.aV(h,A.bV(A.b([q,B.hr,o,B.cy,n,B.aev,A.cV(A.bcA(k,A.V(p,h,h,h,h,A.a3(A.f().$3$color$fontSize$fontWeight((A.c(a).ax.a===B.b?A.d():A.e()).gjh(),16,B.j),B.o,h,h,h,B.a6,0,h),h,h,h),m,l),h,260)],j),B.t,B.v,B.r),B.n,h,h,r,h,h,h,h,B.uh,h,h,1/0)
 $.ck()
-return A.ha(h,A.tm(h,s,A.jK(!0,A.F5(A.f0(A.xc(new A.dQ(B.O5,A.bV(A.b([r,B.ma,A.V("v1.0.51+56",h,h,h,h,A.a3(A.f().$3$color$fontSize$fontWeight((A.c(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.U,h,h,h,h,0,h),h,h,h)],j),B.t,B.ay,B.r),h),B.dP),h,h)),B.a1,!0),i.e),B.a7,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aPU(a),h,h,h,h,h,h)}}
+return A.ha(h,A.tm(h,s,A.jK(!0,A.F5(A.f0(A.xc(new A.dQ(B.O5,A.bV(A.b([r,B.ma,A.V("v1.0.52+57",h,h,h,h,A.a3(A.f().$3$color$fontSize$fontWeight((A.c(a).ax.a===B.b?A.d():A.e()).gm(),12,B.e),B.U,h,h,h,h,0,h),h,h,h)],j),B.t,B.ay,B.r),h),B.dP),h,h)),B.a1,!0),i.e),B.a7,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aPU(a),h,h,h,h,h,h)}}
 A.aPW.prototype={
 $0(){return A.brU()},
 $S:471}
@@ -64609,7 +64609,7 @@ break
 case 9:h=m.gyy()
 $.ck()
 s=11
-return A.u(A.AN("1.0.51+56",h,k),$async$vG)
+return A.u(A.AN("1.0.52+57",h,k),$async$vG)
 case 11:e=b
 case 8:j=e
 if(m.c==null){n=[1]
@@ -64666,7 +64666,7 @@ p=4
 i=m.gyy()
 $.ck()
 s=7
-return A.u(A.AN("1.0.51+56",i,l),$async$Fe)
+return A.u(A.AN("1.0.52+57",i,l),$async$Fe)
 case 7:k=b
 if(m.c==null){n=[1]
 s=5
