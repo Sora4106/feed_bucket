@@ -1,7 +1,7 @@
 {
   "app_name": "feed_bucket",
-  "version": "1.0.52",
-  "build_number": "57",
-  "release": "1.0.52+57",
+  "version": "1.0.53",
+  "build_number": "58",
+  "release": "1.0.53+58",
   "package_name": "feed_bucket"
 }
